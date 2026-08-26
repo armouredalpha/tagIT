@@ -1,0 +1,1570 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TagIT — 5-Phase Build Cookbook</title>
+<style>
+    /* ── Reset & Base ─────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+        --accent: #6d5ce8;
+        --accent-dark: #5744d6;
+        --accent-light: #f0edfd;
+        --accent-mid: #8a7bf0;
+        --accent-pale: #e2ddfa;
+        --danger: #c0392b;
+        --danger-dark: #96281b;
+        --danger-light: #fdecea;
+        --warn: #b7791f;
+        --warn-light: #fff8e8;
+        --sidebar-bg: #5b4bd4;
+        --sidebar-bg2: #4536ad;
+        --sidebar-txt: #f3f1fd;
+        --sidebar-w: 300px;
+        --body-bg: #f7f6fc;
+        --card-bg: #ffffff;
+        --text: #26243a;
+        --muted: #6b6788;
+        --border: #e3e0f3;
+        --code-bg: #f4f2fb;
+        --code-border: #ded9f2;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+        font-family: 'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        font-size: 18px;
+        line-height: 1.75;
+        color: var(--text);
+        background: var(--body-bg);
+        display: flex;
+        min-height: 100vh;
+    }
+
+    ::selection { background: var(--accent-pale); color: var(--accent-dark); }
+
+    /* ── Sidebar ──────────────────────────────────────── */
+    #sidebar {
+        width: var(--sidebar-w);
+        min-width: var(--sidebar-w);
+        background: linear-gradient(180deg, var(--sidebar-bg) 0%, var(--sidebar-bg2) 100%);
+        color: var(--sidebar-txt);
+        position: fixed;
+        top: 0; left: 0;
+        height: 100vh;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        z-index: 100;
+        border-right: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .sidebar-brand {
+        background: linear-gradient(120deg, #2c2266, #3d2e94);
+        padding: 26px 18px;
+        border-bottom: 3px solid var(--accent-mid);
+        position: relative;
+        overflow: hidden;
+        flex-shrink: 0;
+    }
+    .sidebar-brand::after {
+        content: '';
+        position: absolute;
+        top: -40%; right: -20%;
+        width: 140px; height: 140px;
+        background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);
+        animation: float 6s ease-in-out infinite;
+    }
+    @keyframes float {
+        0%,100% { transform: translate(0,0); }
+        50% { transform: translate(-10px, 12px); }
+    }
+    .sidebar-brand .project-name { font-size: 1.5em; font-weight: 800; color: #ffffff; letter-spacing: 0.3px; position: relative; line-height: 1.25; text-shadow: 0 2px 6px rgba(0,0,0,0.35); }
+    .sidebar-brand .project-sub { font-size: 0.85em; color: rgba(255,255,255,0.85); margin-top: 6px; position: relative; }
+
+    .sidebar-nav { padding: 14px 0 40px; flex: 1; overflow-y: auto; }
+    .sidebar-nav::-webkit-scrollbar { width: 8px; }
+    .sidebar-nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 8px; }
+
+    .nav-section-title {
+        font-size: 0.72em;
+        text-transform: uppercase;
+        letter-spacing: 1.2px;
+        color: #241c55;
+        padding: 16px 18px 6px;
+        font-weight: 800;
+    }
+
+    .nav-item {
+        display: block;
+        padding: 7px 18px 7px 22px;
+        color: #ffffff;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.25);
+        text-decoration: none;
+        font-size: 0.88em;
+        font-weight: 500;
+        border-left: 3px solid transparent;
+        transition: all 0.18s ease;
+        line-height: 1.4;
+    }
+    .nav-item:hover { color: #fff; background: rgba(0,0,0,0.16); border-left-color: #ffffff; padding-left: 26px; }
+    .nav-item.active { color: #241c55; background: #ffffff; border-left-color: #241c55; font-weight: 700; text-shadow: none; }
+    .nav-item.sub { padding-left: 34px; font-size: 0.82em; font-weight: 400; color: rgba(255,255,255,0.92); }
+    .nav-item.sub:hover { padding-left: 38px; color: #fff; }
+    .nav-item.sub.active { color: #241c55; font-weight: 700; }
+
+    /* ── Main Content ─────────────────────────────────── */
+    #main { margin-left: var(--sidebar-w); flex: 1; min-width: 0; }
+
+    .topbar {
+        background: rgba(255,255,255,0.9);
+        backdrop-filter: blur(6px);
+        border-bottom: 1px solid var(--border);
+        padding: 12px 40px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        box-shadow: 0 1px 6px rgba(60,40,140,0.05);
+    }
+    .topbar-crumb { font-size: 0.82em; color: var(--muted); }
+    .topbar-crumb a { color: var(--accent); text-decoration: none; font-weight: 600; }
+    .topbar-crumb a:hover { text-decoration: underline; }
+    .topbar-sep { color: var(--border); }
+
+    .content { max-width: 1180px; padding: 40px 60px 100px; text-align: center; margin: 0 auto; }
+
+    /* ── Typography ───────────────────────────────────── */
+    h1, h2, h3, h4 { color: #201c3d; font-weight: 700; margin-top: 2.1rem; margin-bottom: 0.6rem; line-height: 1.3; text-align: center; }
+
+    h1 {
+        font-size: 2.3em;
+        padding-bottom: 12px;
+        border-bottom: 3px solid var(--accent);
+        margin-bottom: 1rem;
+        color: var(--accent-dark);
+        position: relative;
+    }
+    h1:first-child { margin-top: 0; }
+    h1::after {
+        content: '';
+        position: absolute;
+        left: 50%; bottom: -3px;
+        height: 3px; width: 60px;
+        background: var(--accent-mid);
+        transform: translateX(-50%);
+        animation: growLine 0.8s ease forwards;
+    }
+    @keyframes growLine { from { width: 0; } to { width: 60px; } }
+
+    h2 { font-size: 1.6em; border-bottom: 1px solid var(--border); padding-bottom: 6px; color: var(--accent-dark); }
+    h3 { font-size: 1.3em; color: var(--accent); }
+    h4 { font-size: 1.1em; color: #4b4768; }
+
+    p { margin-bottom: 0.9rem; text-align: center; }
+    ul, ol { padding-left: 28px; margin-bottom: 1rem; text-align: left; display: inline-block; }
+    li { margin-bottom: 5px; text-align: left; }
+
+    a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color .15s; word-break: break-word; }
+    a:hover { border-bottom-color: var(--accent); }
+
+    hr { border: none; border-top: 1px solid var(--border); margin: 2.2rem 0; }
+
+    strong { color: #201c3d; }
+
+    /* subtitle under main title */
+    .subtitle { border: none; margin-top: 0; color: var(--muted); font-size: 1.05em; font-weight: 400; padding-bottom: 0; }
+
+    /* ── Reveal-on-scroll animation ───────────────────── */
+    .reveal { opacity: 0; transform: translateY(16px); transition: opacity .6s ease, transform .6s ease; }
+    .reveal.in-view { opacity: 1; transform: translateY(0); }
+
+    /* ── Quote / build-callout ────────────────────────── */
+    .build-quote {
+        background: linear-gradient(135deg, var(--accent-light), #ffffff);
+        border-left: 4px solid var(--accent);
+        border-radius: 8px;
+        padding: 16px 20px;
+        margin: 1rem 0 1.5rem;
+        font-size: 0.95em;
+        text-align: left;
+    }
+
+    /* ── Code Blocks ──────────────────────────────────── */
+    code {
+        font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+        font-size: 0.87em;
+        background: var(--code-bg);
+        color: var(--accent-dark);
+        padding: 2px 6px;
+        border-radius: 3px;
+        border: 1px solid var(--code-border);
+    }
+
+    pre {
+        background: #1a1533;
+        color: #ece8fb;
+        border-radius: 8px;
+        padding: 18px 20px;
+        overflow-x: auto;
+        margin: 1rem 0 1.4rem;
+        position: relative;
+        border: 1px solid #120e26;
+        line-height: 1.55;
+        box-shadow: 0 4px 16px rgba(30,20,60,0.14);
+        text-align: left;
+    }
+    pre code {
+        background: transparent;
+        color: inherit;
+        padding: 0;
+        border: none;
+        font-size: 0.86em;
+        white-space: pre;
+    }
+
+    .pre-lang {
+        position: absolute;
+        top: 10px; left: 16px;
+        font-size: 0.68em;
+        letter-spacing: 0.6px;
+        text-transform: uppercase;
+        color: rgba(236,232,251,0.4);
+        font-family: monospace;
+    }
+    pre.has-lang code { display: block; margin-top: 20px; }
+
+    /* copy button */
+    .copy-btn {
+        position: absolute;
+        top: 10px; right: 10px;
+        background: rgba(255,255,255,0.08);
+        color: #dcd4f9;
+        border: 1px solid rgba(255,255,255,0.18);
+        padding: 4px 11px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.74em;
+        font-family: inherit;
+        letter-spacing: 0.3px;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+    .copy-btn:hover { background: var(--accent-mid); color: #fff; border-color: var(--accent-mid); }
+    .copy-btn.copied { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+    /* ── Callout Boxes ────────────────────────────────── */
+    .callout {
+        border-radius: 6px;
+        padding: 14px 18px;
+        margin: 1.2rem 0;
+        border-left: 4px solid;
+        font-size: 0.93em;
+        transition: transform .15s ease;
+        text-align: left;
+    }
+    .callout:hover { transform: translateX(2px); }
+
+    .callout-note   { background: var(--warn-light); border-color: var(--warn); }
+    .callout-tip    { background: var(--accent-light); border-color: var(--accent-mid); }
+    .callout-danger { background: var(--danger-light); border-color: var(--danger); }
+
+    .callout strong:first-child { display: block; margin-bottom: 4px; }
+    .callout-note strong:first-child   { color: var(--warn); }
+    .callout-tip strong:first-child    { color: var(--accent-dark); }
+    .callout-danger strong:first-child { color: var(--danger-dark); }
+
+    /* ── Checkpoint box (TagIT-style) ─────────────────── */
+    .checkpoint {
+        background: linear-gradient(135deg, var(--accent-light), #ffffff);
+        border: 1px solid var(--accent-mid);
+        border-left: 5px solid var(--accent);
+        border-radius: 8px;
+        padding: 14px 20px;
+        margin: 1.3rem 0 1.6rem;
+        text-align: left;
+        font-size: 0.95em;
+    }
+    .checkpoint strong.tag {
+        display: inline-block;
+        color: #fff;
+        background: var(--accent);
+        border-radius: 20px;
+        padding: 3px 12px;
+        font-size: 0.78em;
+        letter-spacing: 0.4px;
+        margin-bottom: 6px;
+    }
+
+    /* ── Table ────────────────────────────────────────── */
+    .table-wrap { overflow-x: auto; margin: 1rem 0 1.5rem; border-radius: 8px; box-shadow: 0 2px 10px rgba(60,40,140,0.08); text-align: left; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.91em; }
+    th { background: var(--accent-dark); color: #fff; padding: 11px 14px; text-align: left; font-weight: 600; }
+    td { padding: 10px 14px; border-bottom: 1px solid var(--border); background: #fff; }
+    tr:nth-child(even) td { background: var(--accent-light); }
+    tr:last-child td { border-bottom: none; }
+    tbody tr { transition: background .15s ease; }
+    tbody tr:hover td { background: var(--accent-pale); }
+
+    /* exercise / phase card */
+    .exercise-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        border-left: 4px solid var(--accent);
+        border-radius: 8px;
+        padding: 18px 22px;
+        margin: 1.2rem 0 1.6rem;
+        box-shadow: 0 2px 12px rgba(60,40,140,0.07);
+        text-align: left;
+    }
+    .exercise-card h3 { margin-top: 0; text-align: left; }
+
+    /* phase badge */
+    .phase-badge {
+        display: inline-block;
+        background: var(--accent);
+        color: #fff;
+        font-size: 0.7em;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        padding: 4px 12px;
+        border-radius: 20px;
+        margin-bottom: 10px;
+    }
+
+    /* file path chip */
+    .file-chip {
+        display: inline-block;
+        font-family: 'SFMono-Regular', Consolas, monospace;
+        font-size: 0.82em;
+        background: var(--accent-pale);
+        color: var(--accent-dark);
+        border: 1px solid var(--accent-mid);
+        border-radius: 5px;
+        padding: 3px 10px;
+        margin-bottom: 1rem;
+    }
+
+    /* ── Completion banner ────────────────────────────── */
+    .completion-banner {
+        background: linear-gradient(135deg, var(--accent-dark) 0%, var(--accent-mid) 100%);
+        color: #fff;
+        border-radius: 12px;
+        padding: 34px 38px;
+        margin: 2.2rem 0 1rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    .completion-banner::before {
+        content: '';
+        position: absolute;
+        top: -60%; left: -20%;
+        width: 300px; height: 300px;
+        background: radial-gradient(circle, rgba(255,255,255,0.15), transparent 70%);
+        animation: float 8s ease-in-out infinite;
+    }
+    .completion-banner h2 { color: #fff; border: none; font-size: 1.7em; margin-bottom: 8px; position: relative; }
+    .completion-banner p { margin: 10px 0; opacity: 0.95; position: relative; max-width: 640px; margin-left: auto; margin-right: auto; }
+    .completion-badge {
+        display: inline-block;
+        background: rgba(255,255,255,0.18);
+        border: 2px solid rgba(255,255,255,0.5);
+        border-radius: 30px;
+        padding: 8px 24px;
+        margin-top: 14px;
+        font-weight: 700;
+        font-size: 1.02em;
+        letter-spacing: 0.5px;
+        position: relative;
+    }
+
+    /* ── Back-to-top button ───────────────────────────── */
+    #to-top {
+        position: fixed;
+        right: 30px; bottom: 30px;
+        width: 44px; height: 44px;
+        border-radius: 50%;
+        background: var(--accent);
+        color: #fff;
+        border: none;
+        cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+        box-shadow: 0 6px 18px rgba(109,92,232,0.4);
+        opacity: 0; pointer-events: none;
+        transform: translateY(10px);
+        transition: all .25s ease;
+        z-index: 60;
+        font-size: 1.1em;
+    }
+    #to-top.show { opacity: 1; pointer-events: auto; transform: translateY(0); }
+    #to-top:hover { background: var(--accent-dark); }
+
+    /* reading progress bar */
+    #read-progress {
+        position: fixed;
+        top: 0; left: var(--sidebar-w); right: 0;
+        height: 3px;
+        background: transparent;
+        z-index: 101;
+    }
+    #read-progress-fill {
+        height: 100%;
+        width: 0%;
+        background: linear-gradient(90deg, var(--accent-mid), var(--accent));
+        transition: width .1s linear;
+    }
+
+    /* ── Responsive ───────────────────────────────────── */
+    @media (max-width: 900px) {
+        #sidebar { transform: translateX(-100%); transition: transform 0.3s; }
+        #sidebar.open { transform: translateX(0); }
+        #main { margin-left: 0; }
+        .content { padding: 24px 22px 60px; }
+        .topbar { padding: 12px 22px; }
+        #read-progress { left: 0; }
+    }
+    @media (max-width: 600px) {
+        h1 { font-size: 1.5em; }
+    }
+
+    #menu-toggle {
+        display: none;
+        background: var(--accent);
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        padding: 6px 10px;
+        cursor: pointer;
+        font-size: 0.9em;
+    }
+    @media (max-width: 900px) { #menu-toggle { display: inline-flex; } }
+</style>
+</head>
+
+<body>
+
+<div id="read-progress"><div id="read-progress-fill"></div></div>
+
+<!-- ═══════════════════════════════════════════════════════ SIDEBAR -->
+<nav id="sidebar">
+    <div class="sidebar-brand">
+        <div class="project-name">TagIT</div>
+        <div class="project-sub">Giving the Physical World a Digital Identity</div>
+    </div>
+
+    <div class="sidebar-nav">
+        <div class="nav-section-title">Overview</div>
+        <a class="nav-item" href="#top">How This Cookbook Works</a>
+        <a class="nav-item" href="#setup">Setup</a>
+
+        <div class="nav-section-title">Phase 1</div>
+        <a class="nav-item" href="#phase1">RC522 + ESP32 Interfacing</a>
+
+        <div class="nav-section-title">Phase 2</div>
+        <a class="nav-item" href="#phase2">Read + OLED</a>
+
+        <div class="nav-section-title">Phase 3</div>
+        <a class="nav-item" href="#phase3">Authorized / Unauthorized</a>
+
+        <div class="nav-section-title">Phase 4</div>
+        <a class="nav-item" href="#phase4">Clock In / Clock Out</a>
+
+        <div class="nav-section-title">Phase 5</div>
+        <a class="nav-item" href="#phase5">Wi-Fi + Server + OLED</a>
+
+        <div class="nav-section-title">Wrap Up</div>
+        <a class="nav-item" href="#congrats">Congratulations</a>
+    </div>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════════ MAIN -->
+<div id="main">
+
+    <div class="topbar">
+        <button id="menu-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">☰ Menu</button>
+        <span class="topbar-crumb">
+            <a href="#top">TagIT Cookbook</a>
+            <span class="topbar-sep"> / </span>
+            5-Phase Build Guide
+        </span>
+    </div>
+
+    <div class="content">
+
+        <h1 id="top">TagIT: Giving the Physical World a Digital Identity</h1>
+        <h2 class="subtitle">A Step-by-Step Build Cookbook — RC522, ESP32 &amp; OLED</h2>
+
+        <h2 class="reveal">How This Cookbook Works</h2>
+        <p class="reveal">We are not going to jump straight to "build an RFID login system." That's how you end up with a pile of components that don't talk to each other and no idea which one is broken.</p>
+        <p class="reveal">Instead, we build one capability at a time, test it, and only then bolt on the next one — and every phase here maps to a real, working <code>.ino</code> file already sitting in this project folder:</p>
+
+        <div class="table-wrap reveal">
+            <table>
+                <thead><tr><th>Phase</th><th>You will be able to...</th><th>New hardware added</th><th>File</th></tr></thead>
+                <tbody>
+                    <tr><td>1</td><td>Read a physical tag's unique identity over SPI</td><td>RC522 reader + tags</td><td><code>phase1_rfid_read</code></td></tr>
+                    <tr><td>2</td><td>Make the board "speak" through text and light</td><td>OLED display + onboard LED</td><td><code>phase2_read_oled</code></td></tr>
+                    <tr><td>3</td><td>Turn identity into an Access Granted / Denied decision</td><td>Buzzer</td><td><code>phase3_auth_oled</code></td></tr>
+                    <tr><td>4</td><td>Turn a scan into a Clock-In / Clock-Out decision, with duration</td><td>(logic only — multi-card registry)</td><td><code>phase4_clockinout_oled</code></td></tr>
+                    <tr><td>5</td><td>Send that decision to a live server over Wi-Fi</td><td>Wi-Fi + HTTP server</td><td><code>phase5_wifi_server_oled</code></td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <p class="reveal">By Phase 5 you will have exactly the system described in the brief: scanning a tag retrieves identity, records the interaction, triggers a local action (LED/buzzer/OLED), and pushes the event to a server that feeds a live clock-in/out dashboard.</p>
+
+        <div class="callout callout-tip reveal">
+            <strong>Every phase ends with a Checkpoint</strong>
+            A specific thing you should see happen. Do not move to the next phase until your checkpoint passes.
+        </div>
+
+        <hr>
+
+        <!-- ══════════════════ SETUP ══════════════════ -->
+        <h1 id="setup" class="reveal">Setup</h1>
+
+        <h2 class="reveal">Bill of Materials</h2>
+        <div class="table-wrap reveal">
+            <table>
+                <thead><tr><th>Component</th><th>Qty</th><th>Notes</th></tr></thead>
+                <tbody>
+                    <tr><td>ESP32 Dev Board</td><td>1</td><td>Any standard 30-pin ESP32-WROOM devkit</td></tr>
+                    <tr><td>RFID Reader (MFRC522)</td><td>1</td><td>Runs on 3.3V — never connect VCC to 5V</td></tr>
+                    <tr><td>RFID Tags/Cards</td><td>2–3</td><td>So you have an "unknown tag" to test rejection logic</td></tr>
+                    <tr><td>OLED Display (SSD1306, 128x64, I2C)</td><td>1</td><td>4-pin: VCC, GND, SDA, SCL</td></tr>
+                    <tr><td>Active/Passive Buzzer</td><td>1</td><td>Used from Phase 3 onward</td></tr>
+                    <tr><td>Jumper wires, breadboard</td><td>—</td><td></td></tr>
+                    <tr><td>USB cable</td><td>1</td><td>Data-capable, not charge-only</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h2 class="reveal">Software &amp; Libraries</h2>
+        <ol class="reveal">
+            <li>Install Arduino IDE (2.x) and add ESP32 board support (<code>Tools → Board → Boards Manager</code> → search "esp32" → install the Espressif Systems package).</li>
+            <li>Select <code>Tools → Board → ESP32 Arduino → ESP32 Dev Module</code> and the correct <code>Tools → Port</code>.</li>
+            <li>Install these libraries via <code>Sketch → Include Library → Manage Libraries</code>: <code>MFRC522</code> (GithubCommunity), <code>Adafruit GFX Library</code>, <code>Adafruit SSD1306</code>, <code>ArduinoJson</code> (v6.x, needed from Phase 5).</li>
+        </ol>
+
+        <h2 class="reveal">The Full Pin Map</h2>
+        <p class="reveal">Wire everything now (it won't conflict), but you'll only activate each part when its phase arrives.</p>
+
+        <div class="table-wrap reveal">
+            <table>
+                <thead><tr><th>Function</th><th>ESP32 Pin</th><th>Used from</th></tr></thead>
+                <tbody>
+                    <tr><td>Onboard LED</td><td>GPIO 2 (built-in — no wiring)</td><td>Phase 2</td></tr>
+                    <tr><td>RFID SDA/SS</td><td>GPIO 5</td><td>Phase 1</td></tr>
+                    <tr><td>RFID SCK</td><td>GPIO 18</td><td>Phase 1</td></tr>
+                    <tr><td>RFID MOSI</td><td>GPIO 23</td><td>Phase 1</td></tr>
+                    <tr><td>RFID MISO</td><td>GPIO 19</td><td>Phase 1</td></tr>
+                    <tr><td>RFID RST</td><td>GPIO 27</td><td>Phase 1</td></tr>
+                    <tr><td>RFID VCC</td><td>3.3V only</td><td>Phase 1</td></tr>
+                    <tr><td>OLED SDA</td><td>GPIO 21</td><td>Phase 2</td></tr>
+                    <tr><td>OLED SCL</td><td>GPIO 22</td><td>Phase 2</td></tr>
+                    <tr><td>OLED VCC</td><td>3.3V</td><td>Phase 2</td></tr>
+                    <tr><td>Buzzer I/O</td><td>GPIO 4</td><td>Phase 3</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="callout callout-danger reveal">
+            <strong>⚠️ Warning</strong>
+            The single most common way to kill an MFRC522 module is powering it from 5V. Double-check this before every power-on.
+        </div>
+
+        <hr>
+
+        <!-- ══════════════════ PHASE 1 ══════════════════ -->
+        <h1 id="phase1" class="reveal">Phase 1 — RC522 + ESP32 Interfacing</h1>
+
+        <div class="exercise-card reveal">
+            <span class="phase-badge">Phase 1</span>
+            <div class="file-chip">phase1_rfid_read/phase1_rfid_read.ino</div>
+
+            <h3>Goal</h3>
+            <p style="text-align:left;">Give a physical tag a readable digital identity: detect an RFID card/tag with the RC522 reader and print its UID (Unique ID) to the Serial Monitor. This is the core sensor of the whole project — everything else is built on top of this UID.</p>
+
+            <h3>Library Required</h3>
+            <ul><li><code>MFRC522</code> by GithubCommunity / Miguel Balboa (Arduino Library Manager)</li></ul>
+
+            <h3>Wiring (ESP32 30-pin board &lt;-&gt; RC522, using VSPI)</h3>
+        </div>
+
+        <div class="table-wrap reveal">
+            <table>
+                <thead><tr><th>RC522 Pin</th><th>ESP32 Pin</th></tr></thead>
+                <tbody>
+                    <tr><td>SDA (SS)</td><td>GPIO 5</td></tr>
+                    <tr><td>SCK</td><td>GPIO 18</td></tr>
+                    <tr><td>MOSI</td><td>GPIO 23</td></tr>
+                    <tr><td>MISO</td><td>GPIO 19</td></tr>
+                    <tr><td>IRQ</td><td>Not connected</td></tr>
+                    <tr><td>GND</td><td>GND</td></tr>
+                    <tr><td>RST</td><td>GPIO 27</td></tr>
+                    <tr><td>3.3V</td><td>3.3V (RC522 is <strong>not</strong> 5V tolerant — do not use VIN/5V)</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h3 class="reveal">Full Code</h3>
+        <pre class="reveal has-lang"><span class="pre-lang">cpp</span><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>#include &lt;SPI.h&gt;
+#include &lt;MFRC522.h&gt;
+
+#define SS_PIN   5
+#define RST_PIN  27
+
+MFRC522 rfid(SS_PIN, RST_PIN);
+
+void setup() {
+  Serial.begin(115200);
+  while (!Serial);          // wait for Serial Monitor to open
+
+  SPI.begin();               // start SPI bus (default VSPI pins on ESP32)
+  rfid.PCD_Init();           // initialize the RC522 reader
+
+  Serial.println("Phase 1: RC522 + ESP32 ready.");
+  Serial.println("Scan a card...");
+}
+
+void loop() {
+  // Step 1: Is a new card present?
+  if (!rfid.PICC_IsNewCardPresent()) {
+    return;
+  }
+
+  // Step 2: Can we read its serial (UID)?
+  if (!rfid.PICC_ReadCardSerial()) {
+    return;
+  }
+
+  // Step 3: Print the UID in HEX, byte by byte
+  Serial.print("Card UID: ");
+  for (byte i = 0; i &lt; rfid.uid.size; i++) {
+    Serial.print(rfid.uid.uidByte[i] &lt; 0x10 ? " 0" : " ");
+    Serial.print(rfid.uid.uidByte[i], HEX);
+  }
+  Serial.println();
+
+  // Step 4: Print card type (optional, useful for debugging)
+  MFRC522::PICC_Type piccType = rfid.PICC_GetType(rfid.uid.sak);
+  Serial.print("PICC type: ");
+  Serial.println(rfid.PICC_GetTypeName(piccType));
+
+  // Step 5: Halt PICC and stop crypto so the next scan works cleanly
+  rfid.PICC_HaltA();
+  rfid.PCD_StopCrypto1();
+}</code></pre>
+
+        <h3 class="reveal">Code Walkthrough</h3>
+        <ul class="reveal">
+            <li><code>MFRC522 rfid(SS_PIN, RST_PIN)</code>: creates the reader object bound to the ESP32 pins used for Slave Select and Reset.</li>
+            <li><code>SPI.begin()</code>: starts the SPI bus. On ESP32 the default VSPI pins are SCK=18, MISO=19, MOSI=23, SS=5 — matches our wiring exactly, so no pin remap is needed.</li>
+            <li><code>PICC_IsNewCardPresent()</code>: polls the reader; returns true only the instant a new tag enters the field.</li>
+            <li><code>PICC_ReadCardSerial()</code>: actually reads the UID bytes from the tag — this UID <em>is</em> the tag's digital identity for every later phase.</li>
+            <li><code>rfid.uid.uidByte[i]</code>: the UID is stored as an array of bytes (4 or 7 bytes depending on card type — Mifare Classic 1K cards are usually 4).</li>
+            <li><code>PICC_HaltA()</code> + <code>PCD_StopCrypto1()</code>: cleanly ends the session with the tag so scanning is reliable and repeatable.</li>
+        </ul>
+
+        <p class="reveal">Open <code>Tools → Serial Monitor</code> at 115200 baud, tap each of your tags, and write down the UID printed for each one (e.g. <code>93 A7 4C 21</code>) — you'll hardcode these in Phase 3.</p>
+
+        <div class="checkpoint reveal">
+            <strong class="tag">✅ Checkpoint</strong>
+            <p style="text-align:left; margin-bottom:0;">Hold Card 1 near the reader (1–3 cm) → a UID prints. Remove and hold Card 2 → a different, repeatable UID prints.</p>
+        </div>
+
+        <div class="callout callout-danger reveal">
+            <strong>Common Errors</strong>
+            <ul>
+                <li><strong>Nothing prints ever</strong>: check 3.3V (not 5V) power, and that SDA→5, RST→27 aren't swapped.</li>
+                <li><strong>Random/garbage UID or it changes every time</strong>: RST pin not connected, or a loose SPI wire (MISO/MOSI swapped).</li>
+                <li><strong>Board resets/browns out when card is scanned</strong>: RC522 sometimes needs a dedicated 3.3V pin — do not share it with other high-draw modules.</li>
+                <li><strong>Library not found</strong>: install "MFRC522" by GithubCommunity from the Arduino Library Manager.</li>
+            </ul>
+        </div>
+
+        <hr>
+
+        <!-- ══════════════════ PHASE 2 ══════════════════ -->
+        <h1 id="phase2" class="reveal">Phase 2 — Read + OLED</h1>
+
+        <div class="exercise-card reveal">
+            <span class="phase-badge">Phase 2</span>
+            <div class="file-chip">phase2_read_oled/phase2_read_oled.ino</div>
+
+            <h3>Goal</h3>
+            <p style="text-align:left;">Give the system a voice. Same detection as Phase 1, now displayed as text on an OLED screen, plus blinking the ESP32's built-in LED (GPIO 2 on most 30-pin boards) as a visible "card detected" signal — no extra wiring needed for the LED, it's already on the board.</p>
+
+            <h3>New Hardware — OLED (SSD1306, 128x64, I2C)</h3>
+        </div>
+
+        <div class="table-wrap reveal">
+            <table>
+                <thead><tr><th>OLED Pin</th><th>ESP32 Pin</th></tr></thead>
+                <tbody>
+                    <tr><td>VCC</td><td>3.3V</td></tr>
+                    <tr><td>GND</td><td>GND</td></tr>
+                    <tr><td>SDA</td><td>GPIO 21</td></tr>
+                    <tr><td>SCL</td><td>GPIO 22</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <p class="reveal"><strong>New Libraries Required:</strong> Adafruit GFX Library, Adafruit SSD1306</p>
+
+        <h3 class="reveal">Full Code</h3>
+        <pre class="reveal has-lang"><span class="pre-lang">cpp</span><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>#include &lt;SPI.h&gt;
+#include &lt;MFRC522.h&gt;
+#include &lt;Wire.h&gt;
+#include &lt;Adafruit_GFX.h&gt;
+#include &lt;Adafruit_SSD1306.h&gt;
+
+#define SS_PIN   5
+#define RST_PIN  27
+#define LED_PIN  2      // ESP32 built-in LED on most 30-pin dev boards
+
+#define SCREEN_WIDTH   128
+#define SCREEN_HEIGHT  64
+#define SCREEN_ADDRESS 0x3C   // try 0x3D if the screen stays blank
+
+MFRC522 rfid(SS_PIN, RST_PIN);
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &amp;Wire, -1);
+
+void setup() {
+  Serial.begin(115200);
+  while (!Serial);
+
+  SPI.begin();
+  rfid.PCD_Init();
+
+  pinMode(LED_PIN, OUTPUT);
+  digitalWrite(LED_PIN, LOW);
+
+  Wire.begin(21, 22);  // SDA, SCL
+  if (!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
+    Serial.println("OLED not found - check wiring/address.");
+  }
+
+  showMessage("Phase 2 Ready", "Scan a card...");
+  Serial.println("Phase 2: RC522 + OLED + LED ready.");
+}
+
+void loop() {
+  if (!rfid.PICC_IsNewCardPresent()) return;
+  if (!rfid.PICC_ReadCardSerial())   return;
+
+  String uid = getUIDString();
+
+  Serial.print("Card UID: ");
+  Serial.println(uid);
+
+  showMessage("Card Detected", uid);
+  blinkLED(4, 120);   // 4 quick blinks whenever a card is detected
+
+  rfid.PICC_HaltA();
+  rfid.PCD_StopCrypto1();
+
+  delay(1200);                          // let the UID stay on screen briefly
+  showMessage("Phase 2 Ready", "Scan a card...");
+}
+
+// Converts raw UID bytes into an uppercase hex string, e.g. "93A74C21"
+String getUIDString() {
+  String result = "";
+  for (byte i = 0; i &lt; rfid.uid.size; i++) {
+    if (rfid.uid.uidByte[i] &lt; 0x10) result += "0";
+    result += String(rfid.uid.uidByte[i], HEX);
+  }
+  result.toUpperCase();
+  return result;
+}
+
+void showMessage(String line1, String line2) {
+  display.clearDisplay();
+  display.setTextSize(1);
+  display.setTextColor(SSD1306_WHITE);
+  display.setCursor(0, 10);
+  display.println(line1);
+  display.setCursor(0, 30);
+  display.println(line2);
+  display.display();
+}
+
+// Blinks the onboard LED `times` times, `onOffMs` on and off each time.
+void blinkLED(int times, int onOffMs) {
+  for (int i = 0; i &lt; times; i++) {
+    digitalWrite(LED_PIN, HIGH);
+    delay(onOffMs);
+    digitalWrite(LED_PIN, LOW);
+    delay(onOffMs);
+  }
+}</code></pre>
+
+        <h3 class="reveal">Code Walkthrough</h3>
+        <ul class="reveal">
+            <li><code>getUIDString()</code>: turns the raw UID bytes from Phase 1 into a clean, comparable string like <code>"93A74C21"</code> — this exact string format is what Phase 3 will compare against known cards.</li>
+            <li><code>LED_PIN 2</code>: the onboard LED on most ESP32 30-pin dev boards is wired to GPIO 2 — check yours has a small LED right next to a pin labeled "2"/"D2" on the silkscreen to confirm before assuming.</li>
+            <li><code>blinkLED(times, onOffMs)</code>: a small reusable helper, same pattern as <code>showMessage()</code> — blinks the LED a set number of times with an on/off delay each. Called once per card detection.</li>
+        </ul>
+
+        <div class="checkpoint reveal">
+            <strong class="tag">✅ Checkpoint</strong>
+            <p style="text-align:left; margin-bottom:0;">Tap a card — the onboard LED blinks 4 times quickly while the OLED shows "Card Detected" + the UID.</p>
+        </div>
+
+        <div class="callout callout-danger reveal">
+            <strong>Common Errors</strong>
+            <ul>
+                <li><strong>LED never blinks</strong>: some ESP32 board variants use a different GPIO for the onboard LED — check your board's silkscreen/datasheet if GPIO 2 doesn't do anything.</li>
+                <li><strong>LED stays on solid instead of blinking</strong>: check <code>blinkLED()</code> is being called and that delay values aren't 0.</li>
+            </ul>
+        </div>
+
+        <hr>
+
+        <!-- ══════════════════ PHASE 3 ══════════════════ -->
+        <h1 id="phase3" class="reveal">Phase 3 — Authorized / Unauthorized Cards + OLED</h1>
+
+        <div class="exercise-card reveal">
+            <span class="phase-badge">Phase 3</span>
+            <div class="file-chip">phase3_auth_oled/phase3_auth_oled.ino</div>
+
+            <h3>Goal</h3>
+            <p style="text-align:left;">Turn a raw UID into a real access decision — the first "digital identity" logic in the system. Compare a scanned UID against two known UIDs, show ACCESS GRANTED / ACCESS DENIED on the OLED, and give synced sound + light feedback:</p>
+            <ul>
+                <li><strong>Authorized</strong> → 1 beep + 1 LED blink</li>
+                <li><strong>Unauthorized/Unknown</strong> → 2 beeps + 2 LED blinks</li>
+            </ul>
+
+            <h3>Hardware</h3>
+            <p style="text-align:left;">RC522 (Phase 1 wiring) + Buzzer module (VCC→3.3V, GND→GND, I/O→GPIO4) + OLED (SDA→GPIO21, SCL→GPIO22) + onboard LED (GPIO2, no extra wiring needed).</p>
+
+            <h3>How to Get Your UIDs</h3>
+            <p style="text-align:left;">Run Phase 1 or 2, scan each card, copy the printed UID (no spaces, uppercase) into <code>AUTHORIZED_UID</code>/<code>UNAUTHORIZED_UID</code>.</p>
+        </div>
+
+        <h3 class="reveal">Full Code</h3>
+        <pre class="reveal has-lang"><span class="pre-lang">cpp</span><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>#include &lt;SPI.h&gt;
+#include &lt;MFRC522.h&gt;
+#include &lt;Wire.h&gt;
+#include &lt;Adafruit_GFX.h&gt;
+#include &lt;Adafruit_SSD1306.h&gt;
+
+#define SS_PIN     5
+#define RST_PIN    27
+#define BUZZER_PIN 4
+#define LED_PIN    2      // ESP32 onboard LED on most 30-pin boards
+
+#define SCREEN_WIDTH   128
+#define SCREEN_HEIGHT  64
+#define SCREEN_ADDRESS 0x3C
+
+MFRC522 rfid(SS_PIN, RST_PIN);
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &amp;Wire, -1);
+
+// ---- EDIT with your real UIDs ----
+String AUTHORIZED_UID   = "E1A12707";
+String UNAUTHORIZED_UID = "52B2535D";
+// -----------------------------------
+
+void setup() {
+  Serial.begin(115200);
+  while (!Serial);
+
+  SPI.begin();
+  rfid.PCD_Init();
+
+  pinMode(LED_PIN, OUTPUT);
+  digitalWrite(LED_PIN, LOW);
+
+  Wire.begin(21, 22);
+  if (!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
+    Serial.println("OLED not found - check wiring/address.");
+  }
+
+  showMessage("Phase 3 Ready", "Scan a card...");
+  Serial.println("Phase 3: Authorized/Unauthorized + OLED + LED ready.");
+}
+
+void loop() {
+  if (!rfid.PICC_IsNewCardPresent()) return;
+  if (!rfid.PICC_ReadCardSerial())   return;
+
+  String uid = getUIDString();
+  Serial.print("Scanned UID: "); Serial.println(uid);
+
+  if (uid == AUTHORIZED_UID) {
+    Serial.println("ACCESS GRANTED");
+    showMessage("ACCESS GRANTED", uid);
+    feedback(1);   // 1 beep + 1 blink
+
+  } else if (uid == UNAUTHORIZED_UID) {
+    Serial.println("ACCESS DENIED");
+    showMessage("ACCESS DENIED", uid);
+    feedback(2);   // 2 beeps + 2 blinks
+
+  } else {
+    Serial.println("UNKNOWN CARD - ACCESS DENIED");
+    showMessage("UNKNOWN CARD", "ACCESS DENIED");
+    feedback(2);   // treated the same as denied
+  }
+
+  rfid.PICC_HaltA();
+  rfid.PCD_StopCrypto1();
+
+  delay(1500);
+  showMessage("Phase 3 Ready", "Scan a card...");
+}
+
+String getUIDString() {
+  String result = "";
+  for (byte i = 0; i &lt; rfid.uid.size; i++) {
+    if (rfid.uid.uidByte[i] &lt; 0x10) result += "0";
+    result += String(rfid.uid.uidByte[i], HEX);
+  }
+  result.toUpperCase();
+  return result;
+}
+
+void showMessage(String line1, String line2) {
+  display.clearDisplay();
+  display.setTextSize(1);
+  display.setTextColor(SSD1306_WHITE);
+  display.setCursor(0, 10);
+  display.println(line1);
+  display.setCursor(0, 30);
+  display.println(line2);
+  display.display();
+}
+
+// Plays `count` beeps and blinks the LED `count` times, together, in sync.
+// 1 = authorized feedback, 2 = denied/unknown feedback.
+void feedback(int count) {
+  for (int i = 0; i &lt; count; i++) {
+    tone(BUZZER_PIN, 1000);
+    digitalWrite(LED_PIN, HIGH);
+    delay(180);
+    noTone(BUZZER_PIN);
+    digitalWrite(LED_PIN, LOW);
+    delay(150);
+  }
+}</code></pre>
+
+        <h3 class="reveal">Code Walkthrough</h3>
+        <ul class="reveal">
+            <li>Buzzer uses <code>tone()</code>/<code>noTone()</code> instead of <code>digitalWrite()</code> HIGH/LOW — a buzzer module needs an oscillating signal to produce real sound (a static HIGH only makes a faint "tick" at the transition).</li>
+            <li><code>feedback(count)</code>: one function drives both the buzzer AND the LED together, <code>count</code> times — this guarantees the beep and blink are always in sync, no separate calls to keep aligned by hand. This exact function carries through Phases 3–5 unchanged.</li>
+            <li>AUTHORIZED calls <code>feedback(1)</code>; both UNAUTHORIZED and UNKNOWN call <code>feedback(2)</code> — matching "sound once for right card, twice for wrong."</li>
+        </ul>
+
+        <div class="checkpoint reveal">
+            <strong class="tag">✅ Checkpoint</strong>
+            <p style="text-align:left; margin-bottom:0;">Scan the authorized card → "ACCESS GRANTED", one beep + one LED blink. Scan the unauthorized card → "ACCESS DENIED", two beeps + two LED blinks. Scan a third/unknown card → "UNKNOWN CARD", same two beep/blink pattern.</p>
+        </div>
+
+        <div class="callout callout-danger reveal">
+            <strong>Common Errors</strong>
+            <ul>
+                <li><strong>Beep/blink out of sync</strong>: shouldn't happen since both are driven by the same loop iteration — check nothing else is calling <code>tone()</code>/<code>digitalWrite(LED_PIN)</code> separately.</li>
+                <li><strong>Buzzer silent</strong>: confirm you're using <code>tone()</code>, not <code>digitalWrite()</code>.</li>
+            </ul>
+        </div>
+
+        <hr>
+
+        <!-- ══════════════════ PHASE 4 ══════════════════ -->
+        <h1 id="phase4" class="reveal">Phase 4 — Clock In / Clock Out + Name + Duration + OLED</h1>
+
+        <div class="exercise-card reveal">
+            <span class="phase-badge">Phase 4</span>
+            <div class="file-chip">phase4_clockinout_oled/phase4_clockinout_oled.ino</div>
+
+            <h3>Goal</h3>
+            <p style="text-align:left;">Move past a binary granted/denied decision into the actual product: each registered card toggles between CLOCK IN and CLOCK OUT on successive scans. Shows the person's name and, on clock-out, how long they were clocked in — all on the OLED, with synced sound + light feedback:</p>
+            <ul>
+                <li><strong>Clock In</strong> → 1 beep + 1 LED blink</li>
+                <li><strong>Clock Out</strong> → 2 beeps + 2 LED blinks</li>
+                <li><strong>Not Registered</strong> → 3 beeps + 3 LED blinks</li>
+            </ul>
+            <p style="text-align:left;">No Wi-Fi yet (that's Phase 5) — duration uses <code>millis()</code> (time since boot), a relative clock.</p>
+
+            <h3>Hardware</h3>
+            <p style="text-align:left;">RC522 + Buzzer (VCC→3.3V, GND→GND, I/O→GPIO4) + OLED (SDA→GPIO21, SCL→GPIO22) + onboard LED (GPIO2, no extra wiring).</p>
+        </div>
+
+        <h3 class="reveal">Full Code</h3>
+        <pre class="reveal has-lang"><span class="pre-lang">cpp</span><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>#include &lt;SPI.h&gt;
+#include &lt;MFRC522.h&gt;
+#include &lt;Wire.h&gt;
+#include &lt;Adafruit_GFX.h&gt;
+#include &lt;Adafruit_SSD1306.h&gt;
+
+#define SS_PIN     5
+#define RST_PIN    27
+#define BUZZER_PIN 4
+#define LED_PIN    2      // ESP32 onboard LED on most 30-pin boards
+
+#define SCREEN_WIDTH   128
+#define SCREEN_HEIGHT  64
+#define SCREEN_ADDRESS 0x3C
+
+MFRC522 rfid(SS_PIN, RST_PIN);
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &amp;Wire, -1);
+
+// ---- Registered cards: EDIT with your real UIDs + names ----
+// name can be "Name1,Name2" for a shared/team card
+struct CardRecord {
+  String uid;
+  String name;
+  bool   isClockedIn;
+  unsigned long clockInTime;
+};
+
+const int NUM_CARDS = 2;
+CardRecord cards[NUM_CARDS] = {
+  { "E1A12707", "Student One",false, 0 },
+  { "52B2535D", "Student Two,Student Three", false, 0 },
+};
+// NUM_CARDS must exactly match the number of entries above.
+
+void setup() {
+  Serial.begin(115200);
+  while (!Serial);
+
+  SPI.begin();
+  rfid.PCD_Init();
+
+  pinMode(LED_PIN, OUTPUT);
+  digitalWrite(LED_PIN, LOW);
+
+  Wire.begin(21, 22);
+  if (!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
+    Serial.println("OLED not found - check wiring/address.");
+  }
+
+  showMessage("Phase 4 Ready", "Scan to clock in/out");
+  Serial.println("Phase 4: Clock In/Out + OLED + LED ready.");
+}
+
+void loop() {
+  if (!rfid.PICC_IsNewCardPresent()) return;
+  if (!rfid.PICC_ReadCardSerial())   return;
+
+  String uid = getUIDString();
+  handleScan(uid);
+
+  rfid.PICC_HaltA();
+  rfid.PCD_StopCrypto1();
+}
+
+String getUIDString() {
+  String result = "";
+  for (byte i = 0; i &lt; rfid.uid.size; i++) {
+    if (rfid.uid.uidByte[i] &lt; 0x10) result += "0";
+    result += String(rfid.uid.uidByte[i], HEX);
+  }
+  result.toUpperCase();
+  return result;
+}
+
+int findCard(String uid) {
+  for (int i = 0; i &lt; NUM_CARDS; i++) {
+    if (cards[i].uid == uid) return i;
+  }
+  return -1;
+}
+
+void handleScan(String uid) {
+  int idx = findCard(uid);
+
+  if (idx == -1) {
+    Serial.print("UID: "); Serial.println(uid);
+    Serial.println("NOT REGISTERED");
+    showMessage("Not Registered", uid);
+    feedback(3);
+    delay(1500);
+    showMessage("Phase 4 Ready", "Scan to clock in/out");
+    return;
+  }
+
+  CardRecord &amp;card = cards[idx];
+
+  if (!card.isClockedIn) {
+    // ---- CLOCK IN ----
+    card.isClockedIn = true;
+    card.clockInTime = millis();
+
+    Serial.println("----- CLOCK IN -----");
+    Serial.print("Name: "); Serial.println(card.name);
+
+    showMessage(card.name, "CLOCKED IN");
+    feedback(1);
+
+  } else {
+    // ---- CLOCK OUT ----
+    unsigned long durationMs = millis() - card.clockInTime;
+    card.isClockedIn = false;
+
+    String duration = formatDuration(durationMs);
+
+    Serial.println("----- CLOCK OUT -----");
+    Serial.print("Name: "); Serial.println(card.name);
+    Serial.print("Duration: "); Serial.println(duration);
+
+    showMessage(card.name, "OUT - " + duration);
+    feedback(2);
+  }
+
+  delay(1800);
+  showMessage("Phase 4 Ready", "Scan to clock in/out");
+}
+
+String formatDuration(unsigned long ms) {
+  unsigned long totalSeconds = ms / 1000;
+  unsigned long minutes = totalSeconds / 60;
+  unsigned long seconds = totalSeconds % 60;
+  return String(minutes) + "m " + String(seconds) + "s";
+}
+
+void showMessage(String line1, String line2) {
+  display.clearDisplay();
+  display.setTextSize(1);
+  display.setTextColor(SSD1306_WHITE);
+  display.setCursor(0, 10);
+  display.println(line1);
+  display.setCursor(0, 30);
+  display.println(line2);
+  display.display();
+}
+
+// Plays `count` beeps and blinks the LED `count` times, together, in sync.
+// 1 = clock in, 2 = clock out, 3 = not registered.
+void feedback(int count) {
+  for (int i = 0; i &lt; count; i++) {
+    tone(BUZZER_PIN, 1000);
+    digitalWrite(LED_PIN, HIGH);
+    delay(180);
+    noTone(BUZZER_PIN);
+    digitalWrite(LED_PIN, LOW);
+    delay(150);
+  }
+}</code></pre>
+
+        <h3 class="reveal">Code Walkthrough</h3>
+        <ul class="reveal">
+            <li><code>CardRecord</code> struct + <code>cards[]</code> array: this is the "digital identity database" — each known tag's UID, name, and live clock state. <code>NUM_CARDS</code> must exactly match the number of entries.</li>
+            <li><code>findCard(uid)</code> looks up a scanned UID in the registry; returns <code>-1</code> if not found — this replaces Phase 3's two hardcoded UID comparisons with a scalable lookup.</li>
+            <li><code>handleScan(uid)</code> toggles <code>isClockedIn</code> for the matched card and computes duration via <code>formatDuration()</code> on clock-out.</li>
+            <li><code>feedback(count)</code> is the exact same helper from Phase 3, just called with a new meaning: 1 = clock in, 2 = clock out, 3 = not registered.</li>
+        </ul>
+
+        <div class="checkpoint reveal">
+            <strong class="tag">✅ Checkpoint</strong>
+            <p style="text-align:left; margin-bottom:0;">Scan a known card once → "&lt;Name&gt; / CLOCKED IN", 1 beep. Scan it again → "&lt;Name&gt; / OUT - Xm Ys", 2 beeps. Scan an unregistered card → "Not Registered", 3 beeps.</p>
+        </div>
+
+        <div class="callout callout-danger reveal">
+            <strong>Common Errors</strong>
+            <ul>
+                <li>Same as Phase 3: if buzzer is silent, confirm <code>tone()</code> is being used, not <code>digitalWrite()</code>.</li>
+                <li><strong>Same card toggles twice from one tap</strong>: <code>PICC_HaltA()</code>/<code>PCD_StopCrypto1()</code> (already present) usually prevents this; a brief extra delay after handling a scan is a simple additional safeguard if it still happens.</li>
+            </ul>
+        </div>
+
+        <hr>
+
+        <!-- ══════════════════ PHASE 5 ══════════════════ -->
+        <h1 id="phase5" class="reveal">Phase 5 — Wi-Fi + Server + OLED</h1>
+
+        <div class="exercise-card reveal">
+            <span class="phase-badge">Phase 5</span>
+            <div class="file-chip">phase5_wifi_server_oled/phase5_wifi_server_oled.ino</div>
+
+            <h3>Goal</h3>
+            <p style="text-align:left;">Every LOGIN/LOGOUT event gets pushed to a server the moment it happens, instead of staying trapped on the board. This is a single-card, per-device clock-in/out client: connects to Wi-Fi, toggles clock in/out on tap, and POSTs the event as JSON. Same buzzer/LED feedback pattern as Phases 3–4:</p>
+            <ul>
+                <li><strong>Clock In</strong> → 1 beep + 1 blink</li>
+                <li><strong>Clock Out</strong> → 2 beeps + 2 blinks</li>
+                <li><strong>Wrong/unregistered card</strong> → 3 beeps + 3 blinks</li>
+            </ul>
+
+            <h3>Hardware / Pins</h3>
+            <ul>
+                <li>OLED: SDA→GPIO21, SCL→GPIO22, VCC→3.3V, GND→GND</li>
+                <li>Buzzer: I/O→GPIO4, VCC→3.3V, GND→GND</li>
+                <li>Onboard LED: GPIO2 (already on the board, no wiring needed)</li>
+            </ul>
+
+            <h3>Libraries Required</h3>
+            <p style="text-align:left;"><code>MFRC522</code>, <code>ArduinoJson</code>, <code>Adafruit GFX</code>, <code>Adafruit SSD1306</code></p>
+        </div>
+
+        <h3 class="reveal">Full Code</h3>
+        <pre class="reveal has-lang"><span class="pre-lang">cpp</span><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>#include &lt;SPI.h&gt;
+#include &lt;MFRC522.h&gt;
+#include &lt;WiFi.h&gt;
+#include &lt;HTTPClient.h&gt;
+#include &lt;ArduinoJson.h&gt;
+#include &lt;Wire.h&gt;
+#include &lt;Adafruit_GFX.h&gt;
+#include &lt;Adafruit_SSD1306.h&gt;
+
+#define SS_PIN     5
+#define RST_PIN    27
+#define BUZZER_PIN 4
+#define LED_PIN    2      // ESP32 onboard LED on most 30-pin boards
+
+#define SCREEN_WIDTH   128
+#define SCREEN_HEIGHT  64
+#define SCREEN_ADDRESS 0x3C   // try 0x3D if the screen stays blank
+
+MFRC522 rfid(SS_PIN, RST_PIN);
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &amp;Wire, -1);
+
+// ============ SAME FOR EVERYONE - set once, share with the class ============
+const char* WIFI_SSID     = "wife_ssid";
+const char* WIFI_PASSWORD = "type your password here";
+const char* SERVER_URL    = "http://10.10.49.227:5000/events";  // instructor's laptop IP
+// ==============================================================================
+
+// ============ EDIT ME - each student fills in their OWN details ============
+String MY_NAME     = "your name here";
+String MY_CARD_UID = "card uid active on your card, e.g. 93A74C21";  // tap your card in Phase 1 to discover this
+// ==============================================================================
+
+bool isClockedIn = false;
+unsigned long lastWifiCheck = 0;
+const unsigned long WIFI_CHECK_INTERVAL = 5000;
+
+void setup() {
+  Serial.begin(115200);
+  while (!Serial);
+
+  SPI.begin();
+  rfid.PCD_Init();
+
+  pinMode(LED_PIN, OUTPUT);
+  digitalWrite(LED_PIN, LOW);
+
+  Wire.begin(21, 22);  // SDA, SCL
+  if (!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
+    Serial.println("OLED not found - check wiring/address.");
+  }
+  showMessage("Starting...", "");
+
+  connectToWiFi();
+
+  Serial.println("Ready.");
+  if (MY_CARD_UID == "UNKNOWN") {
+    Serial.println("MY_CARD_UID not set yet - tap your card to discover it.");
+    showMessage("Tap card to", "discover UID");
+  } else {
+    showIdleScreen();
+  }
+}
+
+void loop() {
+  String uid;
+  if (readRFID(uid)) {
+
+    if (MY_CARD_UID == "UNKNOWN") {
+      Serial.print("Detected UID: "); Serial.println(uid);
+      Serial.println("Copy this into MY_CARD_UID, then re-upload.");
+      showMessage("UID found:", uid);
+      feedback(3);
+      delay(2000);
+      showMessage("Tap card to", "discover UID");
+      return;
+    }
+
+    if (uid != MY_CARD_UID) {
+      Serial.println("This isn't the registered card for this device - ignoring.");
+      showMessage("Wrong card!", "Not registered");
+      feedback(3);
+      delay(1500);
+      showIdleScreen();
+      return;
+    }
+
+    handleScan();
+  }
+
+  if (millis() - lastWifiCheck &gt; WIFI_CHECK_INTERVAL) {
+    lastWifiCheck = millis();
+    if (WiFi.status() != WL_CONNECTED) {
+      showMessage("WiFi lost...", "Reconnecting");
+      connectToWiFi();
+      showIdleScreen();
+    }
+  }
+}
+
+void connectToWiFi() {
+  Serial.print("Connecting to Wi-Fi...");
+  showMessage("Connecting to", "WiFi...");
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  unsigned long start = millis();
+  while (WiFi.status() != WL_CONNECTED &amp;&amp; millis() - start &lt; 15000) {
+    delay(300);
+    Serial.print(".");
+  }
+  Serial.println();
+  if (WiFi.status() == WL_CONNECTED) {
+    Serial.print("Connected. IP: "); Serial.println(WiFi.localIP());
+    showMessage("WiFi Connected", WiFi.localIP().toString());
+    delay(1000);
+  } else {
+    Serial.println("Wi-Fi connect failed, will retry in background.");
+    showMessage("WiFi Failed", "Retrying later");
+    delay(1000);
+  }
+}
+
+bool readRFID(String &amp;uid) {
+  if (!rfid.PICC_IsNewCardPresent()) return false;
+  if (!rfid.PICC_ReadCardSerial())   return false;
+
+  uid = "";
+  for (byte i = 0; i &lt; rfid.uid.size; i++) {
+    if (rfid.uid.uidByte[i] &lt; 0x10) uid += "0";
+    uid += String(rfid.uid.uidByte[i], HEX);
+  }
+  uid.toUpperCase();
+
+  rfid.PICC_HaltA();
+  rfid.PCD_StopCrypto1();
+  return true;
+}
+
+void handleScan() {
+  String eventType = isClockedIn ? "CLOCK_OUT" : "CLOCK_IN";
+  isClockedIn = !isClockedIn;
+
+  Serial.print("Name: "); Serial.println(MY_NAME);
+  Serial.print("Event: "); Serial.println(eventType);
+
+  if (eventType == "CLOCK_IN") {
+    feedback(1);
+    showMessage(MY_NAME, "CLOCKED IN");
+  } else {
+    feedback(2);
+    showMessage(MY_NAME, "CLOCKED OUT");
+  }
+
+  bool sent = sendEvent(eventType);
+  delay(1200);
+  showStatusResult(sent);
+  delay(1000);
+  showIdleScreen();
+}
+
+bool sendEvent(String eventType) {
+  if (WiFi.status() != WL_CONNECTED) {
+    Serial.println("No Wi-Fi - event NOT sent.");
+    return false;
+  }
+
+  StaticJsonDocument&lt;256&gt; doc;
+  doc["uid"]        = MY_CARD_UID;
+  doc["name"]       = MY_NAME;
+  doc["event_type"] = eventType;
+
+  String payload;
+  serializeJson(doc, payload);
+
+  HTTPClient http;
+  http.begin(SERVER_URL);
+  http.addHeader("Content-Type", "application/json");
+  int httpCode = http.POST(payload);
+
+  bool success = (httpCode &gt; 0 &amp;&amp; httpCode &lt; 300);
+
+  if (httpCode &gt; 0) {
+    Serial.print("Server responded: "); Serial.println(httpCode);
+  } else {
+    Serial.print("POST failed: "); Serial.println(http.errorToString(httpCode));
+  }
+  http.end();
+  return success;
+}
+
+// ---------------- OLED helper functions ----------------
+
+// Two-line generic message
+void showMessage(String line1, String line2) {
+  display.clearDisplay();
+  display.setTextSize(1);
+  display.setTextColor(SSD1306_WHITE);
+  display.setCursor(0, 10);
+  display.println(line1);
+  display.setCursor(0, 30);
+  display.println(line2);
+  display.display();
+}
+
+// Idle screen shown between scans
+void showIdleScreen() {
+  display.clearDisplay();
+  display.setTextSize(1);
+  display.setTextColor(SSD1306_WHITE);
+  display.setCursor(0, 0);
+  display.println(MY_NAME);
+
+  display.setCursor(0, 16);
+  display.println(isClockedIn ? "Status: IN" : "Status: OUT");
+
+  display.setCursor(0, 32);
+  display.println(WiFi.status() == WL_CONNECTED ? "WiFi: Connected" : "WiFi: Disconnected");
+
+  display.setCursor(0, 50);
+  display.println("Tap card to scan");
+
+  display.display();
+}
+
+// Shown right after trying to send an event
+void showStatusResult(bool sent) {
+  display.clearDisplay();
+  display.setTextSize(1);
+  display.setTextColor(SSD1306_WHITE);
+  display.setCursor(0, 20);
+  display.println(sent ? "Sent to server" : "Send FAILED");
+  display.setCursor(0, 36);
+  display.println(sent ? "OK" : "Check WiFi/server");
+  display.display();
+}
+
+// ---------------- Buzzer + LED feedback (synced) ----------------
+// Plays `count` beeps and blinks the LED `count` times, together.
+// 1 = clock in, 2 = clock out, 3 = wrong card / discovery mode.
+void feedback(int count) {
+  for (int i = 0; i &lt; count; i++) {
+    tone(BUZZER_PIN, 1000);
+    digitalWrite(LED_PIN, HIGH);
+    delay(180);
+    noTone(BUZZER_PIN);
+    digitalWrite(LED_PIN, LOW);
+    delay(150);
+  }
+}</code></pre>
+
+        <h3 class="reveal">Configuration</h3>
+        <ul class="reveal">
+            <li><strong>Shared/instructor-set values</strong> (same for everyone): <code>WIFI_SSID</code>, <code>WIFI_PASSWORD</code>, <code>SERVER_URL</code> (instructor's laptop IP + <code>/events</code> endpoint).</li>
+            <li><strong>Per-student values</strong> (edit for your own device): <code>MY_NAME</code>, <code>MY_CARD_UID</code>. If <code>MY_CARD_UID</code> is left as <code>"UNKNOWN"</code>, the sketch enters discovery mode: tap your card once, read the printed UID from Serial/OLED, then paste it into <code>MY_CARD_UID</code> and re-upload.</li>
+        </ul>
+
+        <h3 class="reveal">Code Walkthrough</h3>
+        <ul class="reveal">
+            <li><code>connectToWiFi()</code>: connects with a 15-second timeout, shows connection status on OLED, and is retried automatically in <code>loop()</code> every <code>WIFI_CHECK_INTERVAL</code> (5s) if the connection drops.</li>
+            <li><code>readRFID(uid)</code>: wraps Phase 1–2's present/read/halt sequence into one boolean helper returning the UID string.</li>
+            <li><code>handleScan()</code>: toggles <code>isClockedIn</code>, gives feedback + OLED message, then calls <code>sendEvent()</code> to POST to the server and shows whether the send succeeded.</li>
+            <li><code>sendEvent(eventType)</code>: builds a small JSON payload (<code>uid</code>, <code>name</code>, <code>event_type</code>) with <code>ArduinoJson</code>, POSTs it via <code>HTTPClient</code>, and returns success/failure based on the HTTP status code — this is exactly the shape <code>server.py</code>'s <code>/events</code> route expects (see Appendix C).</li>
+        </ul>
+
+        <div class="checkpoint reveal">
+            <strong class="tag">✅ Checkpoint</strong>
+            <p style="text-align:left; margin-bottom:0;">Tap your card → OLED "CLOCKED IN", one beep + one blink, then "Sent to server" if <code>server.py</code> is running and reachable. Tap again → "CLOCKED OUT", two beeps + two blinks.</p>
+        </div>
+
+        <div class="callout callout-danger reveal">
+            <strong>Common Errors</strong>
+            <ul>
+                <li><strong>Wi-Fi connect failed</strong>: sketch continues and retries connecting in the background every 5s; events won't send until reconnected.</li>
+                <li><strong>"Send FAILED" on OLED</strong>: check <code>SERVER_URL</code> matches the instructor's current laptop IP and that <code>server.py</code> is running and reachable on the same Wi-Fi.</li>
+                <li><strong>UID not recognized as yours</strong>: confirm <code>MY_CARD_UID</code> was copied exactly (uppercase, no spaces) from discovery mode.</li>
+            </ul>
+        </div>
+
+        <hr>
+
+        <!-- ══════════════════ COMPLETION ══════════════════ -->
+        <div class="completion-banner reveal" id="congrats">
+            <h2>You've Built the Full TagIT Pipeline</h2>
+            <p>From a bare UID read over SPI to a Wi-Fi-connected, server-reporting clock-in/out client — five working phases, each one building directly on the last.</p>
+            <div class="completion-badge">✓ Phases 1 – 5 Complete</div>
+        </div>
+
+    </div>
+</div>
+
+<button id="to-top" onclick="window.scrollTo({top:0, behavior:'smooth'})" aria-label="Back to top">↑</button>
+
+<script>
+    /* ── Copy for pre blocks ──────────────────────────── */
+    function copyCode(btn) {
+        const pre = btn.parentElement;
+        const code = pre.querySelector('code');
+        navigator.clipboard.writeText(code.innerText).then(() => {
+            btn.textContent = 'Copied!';
+            btn.classList.add('copied');
+            setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 1800);
+        });
+    }
+
+    /* ── Reveal-on-scroll ──────────────────────────────── */
+    const revealObserver = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('in-view');
+                revealObserver.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
+    document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+
+    /* ── Active sidebar link on scroll ───────────────── */
+    const sections = document.querySelectorAll('h1[id], h2[id]');
+    const navLinks = document.querySelectorAll('#sidebar .nav-item');
+
+    const sidebarEl = document.querySelector('.sidebar-nav');
+    const navObserver = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                navLinks.forEach(l => l.classList.remove('active'));
+                const active = document.querySelector(`#sidebar a[href="#${entry.target.id}"]`);
+                if (active) {
+                    active.classList.add('active');
+                    /* keep the sidebar scrolled so the active topic stays in view
+                       as the reader scrolls through the main content */
+                    const navRect = active.getBoundingClientRect();
+                    const barRect = sidebarEl.getBoundingClientRect();
+                    if (navRect.top < barRect.top + 60 || navRect.bottom > barRect.bottom - 40) {
+                        active.scrollIntoView({ block: 'center', behavior: 'smooth' });
+                    }
+                }
+            }
+        });
+    }, { rootMargin: '-20% 0px -70% 0px' });
+    sections.forEach(s => navObserver.observe(s));
+
+    /* ── Reading progress + to-top button ─────────────── */
+    const progressFill = document.getElementById('read-progress-fill');
+    const toTopBtn = document.getElementById('to-top');
+    window.addEventListener('scroll', () => {
+        const scrollTop = window.scrollY;
+        const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+        const pct = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+        progressFill.style.width = pct + '%';
+        toTopBtn.classList.toggle('show', scrollTop > 500);
+    });
+
+    /* close mobile sidebar on nav click */
+    navLinks.forEach(link => link.addEventListener('click', () => {
+        document.getElementById('sidebar').classList.remove('open');
+    }));
+</script>
+
+</body>
+</html>
