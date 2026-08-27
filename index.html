@@ -465,6 +465,30 @@
         transition: width .1s linear;
     }
 
+    /* ── Circuit / wiring figures ─────────────────────── */
+    .circuit-figure {
+        margin: 1.6rem auto;
+        max-width: 660px;
+        text-align: center;
+    }
+    .circuit-figure img { margin-left: auto; margin-right: auto; }
+    .circuit-figure img {
+        width: 100%;
+        height: auto;
+        display: block;
+        background: #ffffff;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 12px;
+        box-shadow: 0 6px 22px rgba(60,40,140,0.12);
+    }
+    .circuit-figure figcaption {
+        margin-top: 10px;
+        font-size: 0.82em;
+        color: var(--muted);
+        letter-spacing: 0.2px;
+    }
+
     /* ── Responsive ───────────────────────────────────── */
     @media (max-width: 900px) {
         #sidebar { transform: translateX(-100%); transition: transform 0.3s; }
@@ -708,6 +732,11 @@ void loop() {
             </ul>
         </div>
 
+        <figure class="circuit-figure reveal">
+            <img src="https://s3.ap-south-1.amazonaws.com/new-assets.ccbp.in/frontend/loading-data/niat_responsive/niat_coding_questions/buzzer.png" alt="ESP32 wired to a buzzer module — I/O to GPIO 4, VCC to 3.3V, GND to GND">
+            <figcaption>Buzzer wiring — I/O → GPIO 4, VCC → 3.3V, GND → GND.</figcaption>
+        </figure>
+
         <h3 class="reveal">Full Code</h3>
         <pre class="reveal has-lang"><span class="pre-lang">cpp</span><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>#define BUZZER_PIN 4
 
@@ -762,6 +791,11 @@ void loop() {
                 <li>The Adafruit library keeps a pixel buffer in RAM. You draw into it (<code>clearDisplay</code>, <code>setCursor</code>, <code>println</code>) and <strong>nothing shows until <code>display.display()</code></strong> pushes the buffer to the panel.</li>
             </ul>
         </div>
+
+        <figure class="circuit-figure reveal">
+            <img src="https://s3.ap-south-1.amazonaws.com/new-assets.ccbp.in/frontend/loading-data/niat_responsive/niat_coding_questions/oled.png" alt="ESP32 wired to an SSD1306 OLED over I2C — VCC to 3.3V, GND to GND, SDA to GPIO 21, SCL to GPIO 22">
+            <figcaption>OLED interface — VCC → 3.3V, GND → GND, SDA → GPIO 21, SCL → GPIO 22.</figcaption>
+        </figure>
 
         <h3 class="reveal">Full Code</h3>
         <pre class="reveal has-lang"><span class="pre-lang">cpp</span><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>#include &lt;Wire.h&gt;
@@ -858,6 +892,11 @@ void loop() {
                 <li>One <code>delay(1000)</code> after each state is enough.</li>
             </ul>
         </div>
+
+        <figure class="circuit-figure reveal">
+            <img src="https://s3.ap-south-1.amazonaws.com/new-assets.ccbp.in/frontend/loading-data/niat_responsive/niat_coding_questions/oled_buzzer.png" alt="ESP32 wired to both the OLED and the buzzer at once — OLED on GPIO 21/22, buzzer on GPIO 4, onboard LED on GPIO 2">
+            <figcaption>OLED + buzzer together — OLED SDA/SCL → GPIO 21/22, buzzer I/O → GPIO 4, onboard LED on GPIO 2.</figcaption>
+        </figure>
 
         <h3 class="reveal">Reference Solution</h3>
         <pre class="reveal has-lang lock-solution locked" data-password="niat1" onclick="unlockSolution(this)"><span class="pre-lang">cpp</span><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>#include &lt;Wire.h&gt;
@@ -982,6 +1021,11 @@ void loop() {
             </table>
         </div>
 
+        <figure class="circuit-figure reveal">
+            <img src="https://s3.ap-south-1.amazonaws.com/new-assets.ccbp.in/frontend/loading-data/niat_responsive/niat_coding_questions/rfid.png" alt="ESP32 wired to the RC522 RFID reader over SPI — SDA/SS GPIO 5, SCK GPIO 18, MOSI GPIO 23, MISO GPIO 19, RST GPIO 27, 3.3V power">
+            <figcaption>RC522 reader for tag reading — SDA → GPIO 5, SCK → GPIO 18, MOSI → GPIO 23, MISO → GPIO 19, RST → GPIO 27, VCC → 3.3V.</figcaption>
+        </figure>
+
         <h3 class="reveal">Full Code</h3>
         <pre class="reveal has-lang"><span class="pre-lang">cpp</span><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>#include &lt;SPI.h&gt;
 #include &lt;MFRC522.h&gt;
@@ -1084,6 +1128,11 @@ void loop() {
                 <li>A short <code>delay()</code> after showing the UID keeps it readable before the idle screen returns.</li>
             </ul>
         </div>
+
+        <figure class="circuit-figure reveal">
+            <img src="https://s3.ap-south-1.amazonaws.com/new-assets.ccbp.in/frontend/loading-data/niat_responsive/niat_coding_questions/entire_circuit.png" alt="The complete circuit — ESP32 with the RC522 RFID reader, the SSD1306 OLED, the buzzer, and the onboard LED all wired together">
+            <figcaption>The entire circuit — RC522 reader + OLED + buzzer + onboard LED, all driven from one sketch.</figcaption>
+        </figure>
 
         <h3 class="reveal">Reference Solution</h3>
         <pre class="reveal has-lang lock-solution locked" data-password="niat2" onclick="unlockSolution(this)"><span class="pre-lang">cpp</span><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>#include &lt;SPI.h&gt;
