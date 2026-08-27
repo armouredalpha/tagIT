@@ -261,6 +261,47 @@
     .copy-btn:hover { background: var(--accent-mid); color: #fff; border-color: var(--accent-mid); }
     .copy-btn.copied { background: var(--accent); color: #fff; border-color: var(--accent); }
 
+    /* ── Locked reference solution ────────────────────── */
+    pre.lock-solution.locked {
+        max-height: 300px;
+        overflow: hidden;
+        cursor: pointer;
+        user-select: none;
+    }
+    pre.lock-solution.locked code {
+        filter: blur(3.5px);
+        opacity: 0.28;
+        animation: codeScroll 16s linear infinite alternate;
+        pointer-events: none;
+    }
+    @keyframes codeScroll {
+        from { transform: translateY(0); }
+        to   { transform: translateY(-55%); }
+    }
+    pre.lock-solution.locked .copy-btn { display: none; }
+    pre.lock-solution.locked .pre-lang { opacity: 0.25; }
+
+    .lock-overlay {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        text-align: center;
+        background: rgba(20, 15, 40, 0.55);
+        border-radius: 8px;
+        color: #ece8fb;
+        font-size: 0.92em;
+        letter-spacing: 0.4px;
+        z-index: 6;
+        transition: background 0.2s ease;
+    }
+    pre.lock-solution.locked:hover .lock-overlay { background: rgba(20, 15, 40, 0.4); }
+    .lock-overlay .lock-icon { font-size: 1.9em; line-height: 1; }
+    .lock-overlay .lock-hint { font-size: 0.78em; opacity: 0.65; }
+
     /* ── Callout Boxes ────────────────────────────────── */
     .callout {
         border-radius: 6px;
@@ -467,8 +508,15 @@
         <a class="nav-item" href="#top">How This Cookbook Works</a>
         <a class="nav-item" href="#setup">Setup</a>
 
+        <div class="nav-section-title">Warm-Ups</div>
+        <a class="nav-item" href="#w-led">LED Blink</a>
+        <a class="nav-item" href="#w-buzzer">Buzzer Test</a>
+        <a class="nav-item" href="#w-oled">OLED Test</a>
+        <a class="nav-item" href="#w-integration">Integration Challenge</a>
+
         <div class="nav-section-title">Phase 1</div>
         <a class="nav-item" href="#phase1">RC522 + ESP32 Interfacing</a>
+        <a class="nav-item sub" href="#c-scan-feedback">Challenge: Scan Feedback</a>
 
         <div class="nav-section-title">Phase 2</div>
         <a class="nav-item" href="#phase2">Read + OLED</a>
@@ -506,7 +554,8 @@
 
         <h2 class="reveal">How This Cookbook Works</h2>
         <p class="reveal">We are not going to jump straight to "build an RFID login system." That's how you end up with a pile of components that don't talk to each other and no idea which one is broken.</p>
-        <p class="reveal">Instead, we build one capability at a time, test it, and only then bolt on the next one — and every phase here maps to a real, working <code>.ino</code> file already sitting in this project folder:</p>
+        <p class="reveal">Instead, we build one capability at a time, test it, and only then bolt on the next one — and every step here maps to a real, working <code>.ino</code> file already sitting in this project folder.</p>
+        <p class="reveal">We start with three quick <strong>Warm-Ups</strong> — LED, buzzer, OLED — each on its own, then a short challenge that drives all three at once. Only then do we bring in the RFID reader and work through the phases below:</p>
 
         <div class="table-wrap reveal">
             <table>
@@ -581,6 +630,322 @@
         <div class="callout callout-danger reveal">
             <strong>⚠️ Warning</strong>
             The single most common way to kill an MFRC522 module is powering it from 5V. Double-check this before every power-on.
+        </div>
+
+        <hr>
+
+        <!-- ══════════════════ WARM-UPS ══════════════════ -->
+        <h1 id="warmups" class="reveal">Warm-Ups — Get Each Part Working Alone</h1>
+        <p class="reveal">Before touching the RFID reader, prove that the three "output" parts of the build work on their own: the LED, the buzzer, and the OLED. Each one is tiny, takes a minute to flash, and gives you a known-good building block. If something breaks later, you already know these three work.</p>
+
+        <div class="callout callout-tip reveal">
+            <strong>Do these in order</strong>
+            LED → Buzzer → OLED → then the Integration Challenge that drives all three at once. Only after that do we start reading tags.
+        </div>
+
+        <!-- ─────────── LED BLINK ─────────── -->
+        <h1 id="w-led" class="reveal">1. LED Blink</h1>
+
+        <div class="exercise-card reveal">
+            <div class="file-chip">warmup1_led_blink/warmup1_led_blink.ino</div>
+
+            <h3>Goal</h3>
+            <p style="text-align:left;">Turn the ESP32's onboard LED on for one second, off for one second, forever. The classic "hello world" of hardware — it confirms your board, cable, and upload toolchain all work.</p>
+
+            <h3>A Little Theory</h3>
+            <ul>
+                <li>A GPIO ("General Purpose Input/Output") pin is a single wire the chip can drive HIGH (~3.3&nbsp;V) or LOW (0&nbsp;V).</li>
+                <li><code>pinMode(pin, OUTPUT)</code> tells the chip we want to <em>drive</em> that pin, not read it.</li>
+                <li><code>digitalWrite(pin, HIGH/LOW)</code> sets the voltage. The onboard LED on most 30-pin ESP32 boards sits on <strong>GPIO&nbsp;2</strong>, so no wiring is needed.</li>
+                <li><code>delay(ms)</code> pauses the program. Without it the LED would toggle millions of times a second and just look dimly on.</li>
+            </ul>
+        </div>
+
+        <h3 class="reveal">Full Code</h3>
+        <pre class="reveal has-lang"><span class="pre-lang">cpp</span><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>#define LED_PIN 2
+
+void setup() {
+  pinMode(LED_PIN, OUTPUT);
+}
+
+void loop() {
+  digitalWrite(LED_PIN, HIGH);  // LED ON
+  delay(1000);                  // Wait 1 second
+
+  digitalWrite(LED_PIN, LOW);   // LED OFF
+  delay(1000);                  // Wait 1 second
+}</code></pre>
+
+        <div class="checkpoint reveal">
+            <strong class="tag">✅ Checkpoint</strong>
+            <p style="text-align:left; margin-bottom:0;">The small onboard LED blinks a steady 1&nbsp;s on / 1&nbsp;s off.</p>
+        </div>
+
+        <div class="callout callout-danger reveal">
+            <strong>Common Errors</strong>
+            <ul>
+                <li><strong>Nothing blinks</strong>: wrong port selected, charge-only USB cable, or your board's onboard LED is on a different GPIO — check the silkscreen.</li>
+                <li><strong>Upload fails</strong>: hold the <code>BOOT</code> button while it says "Connecting…".</li>
+            </ul>
+        </div>
+
+        <hr>
+
+        <!-- ─────────── BUZZER ─────────── -->
+        <h1 id="w-buzzer" class="reveal">2. Buzzer Test</h1>
+
+        <div class="exercise-card reveal">
+            <div class="file-chip">warmup2_buzzer/warmup2_buzzer.ino</div>
+
+            <h3>Goal</h3>
+            <p style="text-align:left;">Make the buzzer beep for half a second, then go silent for half a second, on repeat.</p>
+
+            <h3>A Little Theory</h3>
+            <ul>
+                <li>A buzzer makes sound only when its signal wire <em>oscillates</em> — a flat HIGH just gives a faint "tick". You need a square wave at an audible frequency (a few kHz).</li>
+                <li>On the ESP32 the <code>ledc</code> peripheral generates that wave in hardware: <code>ledcAttach(pin, freq, resolution)</code> sets it up, <code>ledcWriteTone(pin, freq)</code> starts a tone, and <code>ledcWriteTone(pin, 0)</code> stops it.</li>
+                <li>Wiring: buzzer <code>I/O → GPIO 4</code>, <code>VCC → 3.3V</code>, <code>GND → GND</code>.</li>
+            </ul>
+        </div>
+
+        <h3 class="reveal">Full Code</h3>
+        <pre class="reveal has-lang"><span class="pre-lang">cpp</span><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>#define BUZZER_PIN 4
+
+void setup() {
+  pinMode(BUZZER_PIN, OUTPUT);
+
+  // Generate a 5 kHz tone
+  ledcAttach(BUZZER_PIN, 5000, 8);
+}
+
+void loop() {
+  ledcWriteTone(BUZZER_PIN, 5000);
+  delay(500);
+
+  ledcWriteTone(BUZZER_PIN, 0);
+  delay(500);
+}</code></pre>
+
+        <div class="callout callout-note reveal">
+            <strong>Note</strong>
+            <code>ledcAttach()</code> is the ESP32 Arduino core 3.x API. On older 2.x cores use <code>ledcSetup()</code> + <code>ledcAttachPin()</code>. The later RFID phases use the simpler <code>tone()</code>/<code>noTone()</code> — either approach makes the same beep.
+        </div>
+
+        <div class="checkpoint reveal">
+            <strong class="tag">✅ Checkpoint</strong>
+            <p style="text-align:left; margin-bottom:0;">You hear a clean, steady beep-silence-beep at roughly one beep per second.</p>
+        </div>
+
+        <div class="callout callout-danger reveal">
+            <strong>Common Errors</strong>
+            <ul>
+                <li><strong>Only a faint click</strong>: you drove the pin HIGH/LOW instead of using a tone function.</li>
+                <li><strong>No sound at all</strong>: passive buzzer wired where an active one is expected, or I/O pin not on GPIO&nbsp;4.</li>
+            </ul>
+        </div>
+
+        <hr>
+
+        <!-- ─────────── OLED ─────────── -->
+        <h1 id="w-oled" class="reveal">3. OLED Test</h1>
+
+        <div class="exercise-card reveal">
+            <div class="file-chip">warmup3_oled/warmup3_oled.ino</div>
+
+            <h3>Goal</h3>
+            <p style="text-align:left;">Print two lines of text to the 128×64 OLED and leave them on screen.</p>
+
+            <h3>A Little Theory</h3>
+            <ul>
+                <li>This OLED talks over <strong>I²C</strong>: two shared wires, <code>SDA</code> (data) and <code>SCL</code> (clock). On the ESP32 we use <code>SDA → GPIO 21</code>, <code>SCL → GPIO 22</code>.</li>
+                <li>Every I²C device has an address; these panels are almost always <code>0x3C</code> (sometimes <code>0x3D</code>).</li>
+                <li>The Adafruit library keeps a pixel buffer in RAM. You draw into it (<code>clearDisplay</code>, <code>setCursor</code>, <code>println</code>) and <strong>nothing shows until <code>display.display()</code></strong> pushes the buffer to the panel.</li>
+            </ul>
+        </div>
+
+        <h3 class="reveal">Full Code</h3>
+        <pre class="reveal has-lang"><span class="pre-lang">cpp</span><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>#include &lt;Wire.h&gt;
+#include &lt;Adafruit_GFX.h&gt;
+#include &lt;Adafruit_SSD1306.h&gt;
+
+#define SCREEN_WIDTH 128
+#define SCREEN_HEIGHT 64
+
+#define OLED_SDA 21
+#define OLED_SCL 22
+
+#define OLED_RESET -1
+#define OLED_ADDRESS 0x3C
+
+Adafruit_SSD1306 display(
+  SCREEN_WIDTH,
+  SCREEN_HEIGHT,
+  &amp;Wire,
+  OLED_RESET
+);
+
+void setup() {
+
+  // Start I2C
+  Wire.begin(OLED_SDA, OLED_SCL);
+
+  // Initialize OLED
+  if (!display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDRESS)) {
+    Serial.begin(115200);
+    Serial.println("OLED NOT FOUND!");
+    while (true);
+  }
+
+  Serial.begin(115200);
+  Serial.println("OLED FOUND!");
+
+  // Clear display
+  display.clearDisplay();
+
+  // Text settings
+  display.setTextSize(2);
+  display.setTextColor(SSD1306_WHITE);
+
+  display.setCursor(10, 10);
+  display.println("YOO ");
+
+  display.setTextSize(2);
+  display.setCursor(10, 30);
+  display.println("NIATIAN!");
+
+  display.display();
+}
+
+void loop() {
+  // Nothing needed
+}</code></pre>
+
+        <div class="checkpoint reveal">
+            <strong class="tag">✅ Checkpoint</strong>
+            <p style="text-align:left; margin-bottom:0;">The OLED shows two lines of large text and holds them.</p>
+        </div>
+
+        <div class="callout callout-danger reveal">
+            <strong>Common Errors</strong>
+            <ul>
+                <li><strong>Screen stays black</strong>: try address <code>0x3D</code>, and double-check SDA/SCL aren't swapped.</li>
+                <li><strong>Serial prints "OLED NOT FOUND!"</strong>: power the panel from 3.3V and confirm GND is shared with the ESP32.</li>
+                <li><strong>Drew text but nothing appears</strong>: you forgot <code>display.display()</code>.</li>
+            </ul>
+        </div>
+
+        <hr>
+
+        <!-- ─────────── INTEGRATION CHALLENGE ─────────── -->
+        <h1 id="w-integration" class="reveal">4. Integration Challenge — All Three Together</h1>
+
+        <div class="exercise-card reveal">
+            <span class="phase-badge">Challenge</span>
+            <div class="file-chip">warmup4_integration/warmup4_integration.ino</div>
+
+            <h3>Your Task</h3>
+            <p style="text-align:left;">Combine the three warm-ups into one sketch. In a loop, alternate between an "ON" state and an "OFF" state, once per second:</p>
+            <ul>
+                <li><strong>ON state</strong>: LED HIGH, buzzer sounding, OLED shows <code>BUZZER ON</code>.</li>
+                <li><strong>OFF state</strong>: LED LOW, buzzer silent, OLED shows <code>BUZZER OFF</code>.</li>
+            </ul>
+            <p style="text-align:left;">The point: get comfortable initialising all three peripherals in one <code>setup()</code> and driving them from one <code>loop()</code> without them interfering. This is the exact pattern every RFID phase after this uses.</p>
+
+            <h3>Hints</h3>
+            <ul>
+                <li>Do all three <code>begin</code>/<code>pinMode</code>/<code>ledcAttach</code> calls in <code>setup()</code>.</li>
+                <li>Redraw the OLED each state change and call <code>display.display()</code>.</li>
+                <li>One <code>delay(1000)</code> after each state is enough.</li>
+            </ul>
+        </div>
+
+        <h3 class="reveal">Reference Solution</h3>
+        <pre class="reveal has-lang lock-solution locked" data-password="niat1" onclick="unlockSolution(this)"><span class="pre-lang">cpp</span><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>#include &lt;Wire.h&gt;
+#include &lt;Adafruit_GFX.h&gt;
+#include &lt;Adafruit_SSD1306.h&gt;
+
+#define BUZZER_PIN 4
+#define LED_PIN 2
+
+#define SCREEN_WIDTH 128
+#define SCREEN_HEIGHT 64
+
+#define OLED_SDA 21
+#define OLED_SCL 22
+#define OLED_RESET -1
+#define OLED_ADDRESS 0x3C
+
+Adafruit_SSD1306 display(
+  SCREEN_WIDTH,
+  SCREEN_HEIGHT,
+  &amp;Wire,
+  OLED_RESET
+);
+
+void setup() {
+
+  pinMode(LED_PIN, OUTPUT);
+
+  Wire.begin(OLED_SDA, OLED_SCL);
+
+  if (!display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDRESS)) {
+    while (true);
+  }
+
+  // Set buzzer frequency
+  ledcAttach(BUZZER_PIN, 5000, 8);
+}
+
+void loop() {
+
+  // =========================
+  // BUZZER ON
+  // =========================
+
+  digitalWrite(LED_PIN, HIGH);
+  ledcWriteTone(BUZZER_PIN, 5000);
+
+  display.clearDisplay();
+
+  display.setTextSize(2);
+  display.setTextColor(SSD1306_WHITE);
+
+  display.setCursor(5, 20);
+  display.println("BUZZER ON");
+
+  display.display();
+
+  delay(1000);
+
+
+  // =========================
+  // BUZZER OFF
+  // =========================
+
+  digitalWrite(LED_PIN, LOW);
+  ledcWriteTone(BUZZER_PIN, 0);
+
+  display.clearDisplay();
+
+  display.setTextSize(2);
+  display.setTextColor(SSD1306_WHITE);
+
+  display.setCursor(5, 20);
+  display.println("BUZZER OFF");
+
+  display.display();
+
+  delay(1000);
+}</code></pre>
+
+        <div class="checkpoint reveal">
+            <strong class="tag">✅ Checkpoint</strong>
+            <p style="text-align:left; margin-bottom:0;">Every second: LED + beep + <code>BUZZER ON</code> on the screen, then LED off + silence + <code>BUZZER OFF</code>. All three parts change together, cleanly.</p>
+        </div>
+
+        <div class="callout callout-tip reveal">
+            <strong>You now have every output the project needs.</strong>
+            From here on we add the one input — the RFID reader — and let a tag decide when these outputs fire.
         </div>
 
         <hr>
@@ -691,6 +1056,134 @@ void loop() {
                 <li><strong>Board resets/browns out when card is scanned</strong>: RC522 sometimes needs a dedicated 3.3V pin — do not share it with other high-draw modules.</li>
                 <li><strong>Library not found</strong>: install "MFRC522" by GithubCommunity from the Arduino Library Manager.</li>
             </ul>
+        </div>
+
+        <hr>
+
+        <!-- ─────────── CHALLENGE: SCAN FEEDBACK ─────────── -->
+        <h1 id="c-scan-feedback" class="reveal">Challenge — Make a Scan Trigger LED + Buzzer + OLED</h1>
+
+        <div class="exercise-card reveal">
+            <span class="phase-badge">Challenge</span>
+            <div class="file-chip">challenge1_scan_feedback/challenge1_scan_feedback.ino</div>
+
+            <h3>Your Task</h3>
+            <p style="text-align:left;">You can now read a UID (Phase 1) and you have the three outputs working (Warm-Ups). Wire them together: <strong>every time a tag is read</strong>, the board should react —</p>
+            <ul>
+                <li>the LED blinks,</li>
+                <li>the buzzer beeps,</li>
+                <li>the OLED shows <code>Card Detected</code> and the UID.</li>
+            </ul>
+            <p style="text-align:left;">Then it returns to an idle "Tap a card…" screen, ready for the next scan. No access logic yet — any tag triggers the same reaction. This is the bridge between "reading a number" and "the system does something you can see and hear."</p>
+
+            <h3>Hints</h3>
+            <ul>
+                <li>Start from the Phase&nbsp;1 present/read/halt sequence.</li>
+                <li>Turn the raw UID bytes into one uppercase hex string so it fits cleanly on the OLED.</li>
+                <li>Drive the LED and buzzer from a single helper so they always fire together.</li>
+                <li>A short <code>delay()</code> after showing the UID keeps it readable before the idle screen returns.</li>
+            </ul>
+        </div>
+
+        <h3 class="reveal">Reference Solution</h3>
+        <pre class="reveal has-lang lock-solution locked" data-password="niat2" onclick="unlockSolution(this)"><span class="pre-lang">cpp</span><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>#include &lt;SPI.h&gt;
+#include &lt;MFRC522.h&gt;
+#include &lt;Wire.h&gt;
+#include &lt;Adafruit_GFX.h&gt;
+#include &lt;Adafruit_SSD1306.h&gt;
+
+#define SS_PIN     5
+#define RST_PIN    27
+#define BUZZER_PIN 4
+#define LED_PIN    2      // ESP32 onboard LED on most 30-pin boards
+
+#define SCREEN_WIDTH   128
+#define SCREEN_HEIGHT  64
+#define SCREEN_ADDRESS 0x3C   // try 0x3D if the screen stays blank
+
+MFRC522 rfid(SS_PIN, RST_PIN);
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &amp;Wire, -1);
+
+void setup() {
+  Serial.begin(115200);
+  while (!Serial);
+
+  SPI.begin();
+  rfid.PCD_Init();
+
+  pinMode(LED_PIN, OUTPUT);
+  digitalWrite(LED_PIN, LOW);
+
+  Wire.begin(21, 22);  // SDA, SCL
+  if (!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
+    Serial.println("OLED not found - check wiring/address.");
+  }
+
+  showMessage("Scan Feedback", "Tap a card...");
+  Serial.println("Challenge: RFID -&gt; LED + Buzzer + OLED ready.");
+}
+
+void loop() {
+  if (!rfid.PICC_IsNewCardPresent()) return;
+  if (!rfid.PICC_ReadCardSerial())   return;
+
+  String uid = getUIDString();
+  Serial.print("Card UID: ");
+  Serial.println(uid);
+
+  // ---- the three warm-ups, now fired by a real tag read ----
+  showMessage("Card Detected", uid);   // OLED  (warm-up 3)
+  feedback(2);                         // LED + buzzer together (warm-ups 1 + 2)
+
+  rfid.PICC_HaltA();
+  rfid.PCD_StopCrypto1();
+
+  delay(1200);
+  showMessage("Scan Feedback", "Tap a card...");
+}
+
+// Raw UID bytes -&gt; uppercase hex string, e.g. "93A74C21"
+String getUIDString() {
+  String result = "";
+  for (byte i = 0; i &lt; rfid.uid.size; i++) {
+    if (rfid.uid.uidByte[i] &lt; 0x10) result += "0";
+    result += String(rfid.uid.uidByte[i], HEX);
+  }
+  result.toUpperCase();
+  return result;
+}
+
+void showMessage(String line1, String line2) {
+  display.clearDisplay();
+  display.setTextSize(1);
+  display.setTextColor(SSD1306_WHITE);
+  display.setCursor(0, 10);
+  display.println(line1);
+  display.setCursor(0, 30);
+  display.println(line2);
+  display.display();
+}
+
+// Plays `count` beeps and blinks the LED `count` times, together, in sync.
+void feedback(int count) {
+  for (int i = 0; i &lt; count; i++) {
+    tone(BUZZER_PIN, 1000);
+    digitalWrite(LED_PIN, HIGH);
+    delay(180);
+    noTone(BUZZER_PIN);
+    digitalWrite(LED_PIN, LOW);
+    delay(150);
+  }
+}</code></pre>
+
+        <div class="checkpoint reveal">
+            <strong class="tag">✅ Checkpoint</strong>
+            <p style="text-align:left; margin-bottom:0;">Tap any tag → LED blinks, buzzer beeps, OLED shows the UID, then it falls back to "Tap a card…". Tapping a different tag shows a different UID with the same reaction.</p>
+        </div>
+
+        <div class="callout callout-tip reveal">
+            <strong>Where this goes next</strong>
+            Right now every tag gets the same beep. The following phases add meaning to the UID: first a name and an authorised / not-authorised decision, then login / logout state, then pushing each event to a Wi-Fi dashboard.
         </div>
 
         <hr>
@@ -1512,6 +2005,28 @@ void feedback(int count) {
             setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 1800);
         });
     }
+
+    /* ── Locked reference solutions ───────────────────── */
+    function unlockSolution(pre) {
+        if (!pre.classList.contains('locked')) return;
+        const pw = prompt('Enter the password to unlock this reference solution:');
+        if (pw === null) return;
+        if (pw.trim() === pre.dataset.password) {
+            pre.classList.remove('locked');
+            const ov = pre.querySelector('.lock-overlay');
+            if (ov) ov.remove();
+        } else {
+            alert('Incorrect password. Try again.');
+        }
+    }
+    document.querySelectorAll('pre.lock-solution.locked').forEach(pre => {
+        const ov = document.createElement('div');
+        ov.className = 'lock-overlay';
+        ov.innerHTML = '<span class="lock-icon">🔒</span>' +
+                       '<span>Click to enter password</span>' +
+                       '<span class="lock-hint">reference solution locked</span>';
+        pre.appendChild(ov);
+    });
 
     /* ── Reveal-on-scroll ──────────────────────────────── */
     const revealObserver = new IntersectionObserver(entries => {
