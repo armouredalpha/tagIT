@@ -533,14 +533,15 @@
         <a class="nav-item" href="#setup">Setup</a>
 
         <div class="nav-section-title">Warm-Ups</div>
-        <a class="nav-item" href="#w-led">LED Blink</a>
-        <a class="nav-item" href="#w-buzzer">Buzzer Test</a>
-        <a class="nav-item" href="#w-oled">OLED Test</a>
-        <a class="nav-item" href="#w-integration">Integration Challenge</a>
+        <a class="nav-item" href="#warmups">Warm-Ups Overview</a>
+        <a class="nav-item sub" href="#w-led">A · LED Blink</a>
+        <a class="nav-item sub" href="#w-buzzer">B · Buzzer Test</a>
+        <a class="nav-item sub" href="#w-oled">C · OLED Test</a>
+        <a class="nav-item sub" href="#w-integration">D · Integration Challenge</a>
 
         <div class="nav-section-title">Phase 1</div>
         <a class="nav-item" href="#phase1">RC522 + ESP32 Interfacing</a>
-        <a class="nav-item sub" href="#c-scan-feedback">Challenge: Scan Feedback</a>
+        <a class="nav-item sub" href="#c-scan-feedback">Bridge Challenge: Scan Feedback</a>
 
         <div class="nav-section-title">Phase 2</div>
         <a class="nav-item" href="#phase2">Read + OLED</a>
@@ -553,10 +554,8 @@
 
         <div class="nav-section-title">Phase 5</div>
         <a class="nav-item" href="#phase5">Wi-Fi + n8n Dashboard + OLED</a>
-        <a class="nav-item sub" href="#n8n-workflow">Building the n8n Workflow</a>
-
-        <div class="nav-section-title">Challenge</div>
-        <a class="nav-item" href="#phase6">Many Readers → One Dashboard</a>
+        <a class="nav-item sub" href="#n8n-workflow">Step 1 · Build the n8n Workflow</a>
+        <a class="nav-item sub" href="#phase5-flash">Step 2 · Flash the ESP32</a>
 
         <div class="nav-section-title">Wrap Up</div>
         <a class="nav-item" href="#congrats">Congratulations</a>
@@ -583,23 +582,22 @@
         <h2 class="reveal">How This Cookbook Works</h2>
         <p class="reveal">We are not going to jump straight to "build an RFID login system." That's how you end up with a pile of components that don't talk to each other and no idea which one is broken.</p>
         <p class="reveal">Instead, we build one capability at a time, test it, and only then bolt on the next one — and every step here maps to a real, working <code>.ino</code> file already sitting in this project folder.</p>
-        <p class="reveal">We start with three quick <strong>Warm-Ups</strong> — LED, buzzer, OLED — each on its own, then a short challenge that drives all three at once. Only then do we bring in the RFID reader and work through the phases below:</p>
+        <p class="reveal">We start with four <strong>Warm-Ups (A–D)</strong> — LED, buzzer, OLED, then a short challenge that drives all three at once. Next we bring in the RFID reader (Phase 1) and a short <strong>Bridge Challenge</strong> that lets a tag trigger those outputs. Then we work through the remaining phases:</p>
 
         <div class="table-wrap reveal">
             <table>
                 <thead><tr><th>Phase</th><th>You will be able to...</th><th>New hardware added</th><th>File</th></tr></thead>
                 <tbody>
                     <tr><td>1</td><td>Read a physical tag's unique identity over SPI</td><td>RC522 reader + tags</td><td><code>phase1_rfid_read</code></td></tr>
-                    <tr><td>2</td><td>Make the board "speak" through text and light</td><td>OLED display + onboard LED</td><td><code>phase2_read_oled</code></td></tr>
-                    <tr><td>3</td><td>Turn identity into an Access Granted / Denied decision</td><td>Buzzer</td><td><code>phase3_auth_oled</code></td></tr>
+                    <tr><td>2</td><td>Show the tag's UID as clean text on the OLED, with an LED signal</td><td>(none new — OLED + LED proven in Warm-Ups)</td><td><code>phase2_read_oled</code></td></tr>
+                    <tr><td>3</td><td>Turn identity into an Access Granted / Denied decision</td><td>(none new — buzzer proven in Warm-Ups)</td><td><code>phase3_auth_oled</code></td></tr>
                     <tr><td>4</td><td>Turn a scan into a Clock-In / Clock-Out decision, with duration</td><td>(logic only — multi-card registry)</td><td><code>phase4_clockinout_oled</code></td></tr>
                     <tr><td>5</td><td>Push that decision straight to n8n over Wi-Fi, which logs it and emails an alert</td><td>Wi-Fi + n8n cloud workflow</td><td><code>rfid_scanner_n8n_direct</code></td></tr>
-                    <tr><td>6</td><td>Run many named readers, each with a card registry, all merging into one live dashboard</td><td>Shared Flask collector + dashboard</td><td><code>phase6_multi_reader</code> · <code>server.py</code></td></tr>
                 </tbody>
             </table>
         </div>
 
-        <p class="reveal">By Phase 5 you will have exactly the system described in the brief: scanning a tag retrieves identity, records the interaction, triggers a local action (LED/buzzer/OLED), and pushes the event to an <strong>n8n</strong> cloud workflow that logs it and fires an email alert — no local <code>server.py</code> to keep running.</p>
+        <p class="reveal">By Phase 5 you will have exactly the system described in the brief: scanning a tag retrieves identity, records the interaction, triggers a local action (LED/buzzer/OLED), and pushes the event to an <strong>n8n</strong> cloud workflow that logs it and fires an email alert.</p>
 
         <div class="callout callout-tip reveal">
             <strong>Every phase ends with a Checkpoint</strong>
@@ -620,7 +618,7 @@
                     <tr><td>RFID Reader (MFRC522)</td><td>1</td><td>Runs on 3.3V — never connect VCC to 5V</td></tr>
                     <tr><td>RFID Tags/Cards</td><td>2–3</td><td>So you have an "unknown tag" to test rejection logic</td></tr>
                     <tr><td>OLED Display (SSD1306, 128x64, I2C)</td><td>1</td><td>4-pin: VCC, GND, SDA, SCL</td></tr>
-                    <tr><td>Active/Passive Buzzer</td><td>1</td><td>Used from Phase 3 onward</td></tr>
+                    <tr><td>Active/Passive Buzzer</td><td>1</td><td>Used from Warm-Up B onward</td></tr>
                     <tr><td>Jumper wires, breadboard</td><td>—</td><td></td></tr>
                     <tr><td>USB cable</td><td>1</td><td>Data-capable, not charge-only</td></tr>
                 </tbody>
@@ -635,23 +633,23 @@
         </ol>
 
         <h2 class="reveal">The Full Pin Map</h2>
-        <p class="reveal">Wire everything now (it won't conflict), but you'll only activate each part when its phase arrives.</p>
+        <p class="reveal">Wire everything now (it won't conflict), but you'll only activate each part when its step arrives.</p>
 
         <div class="table-wrap reveal">
             <table>
                 <thead><tr><th>Function</th><th>ESP32 Pin</th><th>Used from</th></tr></thead>
                 <tbody>
-                    <tr><td>Onboard LED</td><td>GPIO 2 (built-in — no wiring)</td><td>Phase 2</td></tr>
+                    <tr><td>Onboard LED</td><td>GPIO 2 (built-in — no wiring)</td><td>Warm-Up A</td></tr>
+                    <tr><td>Buzzer I/O</td><td>GPIO 4</td><td>Warm-Up B</td></tr>
+                    <tr><td>OLED SDA</td><td>GPIO 21</td><td>Warm-Up C</td></tr>
+                    <tr><td>OLED SCL</td><td>GPIO 22</td><td>Warm-Up C</td></tr>
+                    <tr><td>OLED VCC</td><td>3.3V</td><td>Warm-Up C</td></tr>
                     <tr><td>RFID SDA/SS</td><td>GPIO 5</td><td>Phase 1</td></tr>
                     <tr><td>RFID SCK</td><td>GPIO 18</td><td>Phase 1</td></tr>
                     <tr><td>RFID MOSI</td><td>GPIO 23</td><td>Phase 1</td></tr>
                     <tr><td>RFID MISO</td><td>GPIO 19</td><td>Phase 1</td></tr>
                     <tr><td>RFID RST</td><td>GPIO 27</td><td>Phase 1</td></tr>
                     <tr><td>RFID VCC</td><td>3.3V only</td><td>Phase 1</td></tr>
-                    <tr><td>OLED SDA</td><td>GPIO 21</td><td>Phase 2</td></tr>
-                    <tr><td>OLED SCL</td><td>GPIO 22</td><td>Phase 2</td></tr>
-                    <tr><td>OLED VCC</td><td>3.3V</td><td>Phase 2</td></tr>
-                    <tr><td>Buzzer I/O</td><td>GPIO 4</td><td>Phase 3</td></tr>
                 </tbody>
             </table>
         </div>
@@ -669,11 +667,11 @@
 
         <div class="callout callout-tip reveal">
             <strong>Do these in order</strong>
-            LED → Buzzer → OLED → then the Integration Challenge that drives all three at once. Only after that do we start reading tags.
+            Warm-Up A (LED) → B (Buzzer) → C (OLED) → then D, the Integration Challenge that drives all three at once. Only after that do we start reading tags.
         </div>
 
         <!-- ─────────── LED BLINK ─────────── -->
-        <h1 id="w-led" class="reveal">1. LED Blink</h1>
+        <h2 id="w-led" class="reveal">Warm-Up A: LED Blink</h2>
 
         <div class="exercise-card reveal">
             <div class="file-chip">warmup1_led_blink/warmup1_led_blink.ino</div>
@@ -721,7 +719,7 @@ void loop() {
         <hr>
 
         <!-- ─────────── BUZZER ─────────── -->
-        <h1 id="w-buzzer" class="reveal">2. Buzzer Test</h1>
+        <h2 id="w-buzzer" class="reveal">Warm-Up B: Buzzer Test</h2>
 
         <div class="exercise-card reveal">
             <div class="file-chip">warmup2_buzzer/warmup2_buzzer.ino</div>
@@ -781,7 +779,7 @@ void loop() {
         <hr>
 
         <!-- ─────────── OLED ─────────── -->
-        <h1 id="w-oled" class="reveal">3. OLED Test</h1>
+        <h2 id="w-oled" class="reveal">Warm-Up C: OLED Test</h2>
 
         <div class="exercise-card reveal">
             <div class="file-chip">warmup3_oled/warmup3_oled.ino</div>
@@ -876,7 +874,7 @@ void loop() {
         <hr>
 
         <!-- ─────────── INTEGRATION CHALLENGE ─────────── -->
-        <h1 id="w-integration" class="reveal">4. Integration Challenge — All Three Together</h1>
+        <h2 id="w-integration" class="reveal">Warm-Up D: Integration Challenge — All Three Together</h2>
 
         <div class="exercise-card reveal">
             <span class="phase-badge">Challenge</span>
@@ -1090,7 +1088,7 @@ void loop() {
             <li><code>PICC_HaltA()</code> + <code>PCD_StopCrypto1()</code>: cleanly ends the session with the tag so scanning is reliable and repeatable.</li>
         </ul>
 
-        <p class="reveal">Open <code>Tools → Serial Monitor</code> at 115200 baud, tap each of your tags, and write down the UID printed for each one (e.g. <code>93 A7 4C 21</code>) — you'll hardcode these in Phase 3.</p>
+        <p class="reveal">Open <code>Tools → Serial Monitor</code> at 115200 baud, tap each of your tags, and write down the UID printed for each one (e.g. <code>93 A7 4C 21</code>) — you'll use them in the Bridge Challenge, and hardcode them in Phase 3.</p>
 
         <div class="checkpoint reveal">
             <strong class="tag">✅ Checkpoint</strong>
@@ -1109,15 +1107,15 @@ void loop() {
 
         <hr>
 
-        <!-- ─────────── CHALLENGE: SCAN FEEDBACK ─────────── -->
-        <h1 id="c-scan-feedback" class="reveal">Challenge — Make a Scan Trigger LED + Buzzer + OLED</h1>
+        <!-- ─────────── BRIDGE CHALLENGE: SCAN FEEDBACK ─────────── -->
+        <h2 id="c-scan-feedback" class="reveal">Bridge Challenge: Make a Scan Trigger LED + Buzzer + OLED</h2>
 
         <div class="exercise-card reveal">
-            <span class="phase-badge">Challenge</span>
+            <span class="phase-badge">Bridge Challenge</span>
             <div class="file-chip">challenge1_scan_feedback/challenge1_scan_feedback.ino</div>
 
             <h3>Your Task</h3>
-            <p style="text-align:left;">You can now read a UID (Phase 1) and you have the three outputs working (Warm-Ups). Wire them together: <strong>every time a tag is read</strong>, the board should react —</p>
+            <p style="text-align:left;">You can now read a UID (Phase 1) and you have the three outputs working (Warm-Ups A–D). Wire them together: <strong>every time a tag is read</strong>, the board should react —</p>
             <ul>
                 <li>the LED blinks,</li>
                 <li>the buzzer beeps,</li>
@@ -1237,7 +1235,7 @@ void feedback(int count) {
 
         <div class="callout callout-tip reveal">
             <strong>Where this goes next</strong>
-            Right now every tag gets the same beep. The following phases add meaning to the UID: first a name and an authorised / not-authorised decision, then login / logout state, then pushing each event to a Wi-Fi dashboard.
+            Right now every tag gets the same beep. The following phases add meaning to the UID: first a cleaner, reusable read-and-display sketch, then an authorised / not-authorised decision, then login / logout state, then pushing each event to a Wi-Fi dashboard.
         </div>
 
         <hr>
@@ -1250,9 +1248,9 @@ void feedback(int count) {
             <div class="file-chip">phase2_read_oled/phase2_read_oled.ino</div>
 
             <h3>Goal</h3>
-            <p style="text-align:left;">Give the system a voice. Same detection as Phase 1, now displayed as text on an OLED screen, plus blinking the ESP32's built-in LED (GPIO 2 on most 30-pin boards) as a visible "card detected" signal — no extra wiring needed for the LED, it's already on the board.</p>
+            <p style="text-align:left;">The Bridge Challenge gave you the quick version; Phase 2 is the clean, reusable version you will build on. Same detection as Phase 1, now displayed as text on an OLED screen, plus blinking the ESP32's built-in LED (GPIO 2 on most 30-pin boards) as a visible "card detected" signal — no extra wiring needed for the LED, it's already on the board.</p>
 
-            <h3>New Hardware — OLED (SSD1306, 128x64, I2C)</h3>
+            <h3>Wiring Recap — OLED (SSD1306, 128x64, I2C), already tested in Warm-Up C</h3>
         </div>
 
         <div class="table-wrap reveal">
@@ -1267,7 +1265,7 @@ void feedback(int count) {
             </table>
         </div>
 
-        <p class="reveal"><strong>New Libraries Required:</strong> Adafruit GFX Library, Adafruit SSD1306</p>
+        <p class="reveal"><strong>Libraries:</strong> Adafruit GFX Library, Adafruit SSD1306 (already installed for Warm-Up C)</p>
 
         <h3 class="reveal">Full Code</h3>
         <pre class="reveal has-lang"><span class="pre-lang">cpp</span><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>#include &lt;SPI.h&gt;
@@ -1394,7 +1392,7 @@ void blinkLED(int times, int onOffMs) {
             </ul>
 
             <h3>Hardware</h3>
-            <p style="text-align:left;">RC522 (Phase 1 wiring) + Buzzer module (VCC→3.3V, GND→GND, I/O→GPIO4) + OLED (SDA→GPIO21, SCL→GPIO22) + onboard LED (GPIO2, no extra wiring needed).</p>
+            <p style="text-align:left;">RC522 (Phase 1 wiring) + Buzzer module (VCC→3.3V, GND→GND, I/O→GPIO4) + OLED (SDA→GPIO21, SCL→GPIO22) + onboard LED (GPIO2, no extra wiring needed). All of it is already wired from the Warm-Ups.</p>
 
             <h3>How to Get Your UIDs</h3>
             <p style="text-align:left;">Run Phase 1 or 2, scan each card, copy the printed UID (no spaces, uppercase) into <code>AUTHORIZED_UID</code>/<code>UNAUTHORIZED_UID</code>.</p>
@@ -1738,12 +1736,15 @@ void feedback(int count) {
             <div class="file-chip">rfid_scanner_n8n_direct/rfid_scanner_n8n_direct.ino</div>
 
             <h3>Goal</h3>
-            <p style="text-align:left;">Every CLOCK_IN/CLOCK_OUT event gets pushed straight to an <strong>n8n</strong> cloud workflow the moment it happens — no separate <code>server.py</code> to keep alive. The ESP32 POSTs the event as JSON to an n8n Webhook node; n8n then handles logging (for the dashboard), stamps the current date/time, and emails an alert. This is a single-card, per-device clock-in/out client with the same buzzer/LED feedback pattern as Phases 3–4:</p>
+            <p style="text-align:left;">Every CLOCK_IN/CLOCK_OUT event gets pushed straight to an <strong>n8n</strong> cloud workflow the moment it happens. The ESP32 POSTs the event as JSON to an n8n Webhook node; n8n then handles logging (for the dashboard), stamps the current date/time, and emails an alert. This is a single-card, per-device clock-in/out client with the same buzzer/LED feedback pattern as Phases 3–4:</p>
             <ul>
                 <li><strong>Clock In</strong> → 1 beep + 1 blink</li>
                 <li><strong>Clock Out</strong> → 2 beeps + 2 blinks</li>
                 <li><strong>Wrong/unregistered card</strong> → 3 beeps + 3 blinks</li>
             </ul>
+
+            <h3>How This Phase Is Ordered</h3>
+            <p style="text-align:left;">The sketch needs a webhook URL to POST to, so we build the receiving side first: <strong>Step 1</strong> builds the n8n workflow and gives you the URL; <strong>Step 2</strong> flashes the ESP32 with that URL. (Testing the webhook needs the flashed sketch too, so Step 1 will point you to Step 2 once and back.)</p>
 
             <h3>Hardware / Pins</h3>
             <ul>
@@ -1760,6 +1761,159 @@ void feedback(int count) {
             <img src="https://s3.ap-south-1.amazonaws.com/new-assets.ccbp.in/frontend/loading-data/niat_java/niat_coding_questions/guardsense-n8n-required-libraries.png" alt="Arduino IDE Library Manager with ArduinoJson installed">
             <figcaption>Install <strong>ArduinoJson</strong> from the Library Manager. <code>WiFi</code> and <code>HTTP CLIENT</code> are standard ESP32 libraries and are usually already present with the board manager.</figcaption>
         </figure>
+
+        <!-- ══════════════════ STEP 1: n8n WORKFLOW ══════════════════ -->
+        <h2 id="n8n-workflow" class="reveal">Step 1: Build the n8n Workflow</h2>
+        <p class="reveal">Before flashing the ESP32 you need somewhere for it to send scans. Build the automation that receives each scan, stamps it with the current date and time, and emails an alert. The workflow is three nodes: <strong>Webhook → Date &amp; Time → Gmail</strong>.</p>
+
+        <h3 class="reveal">1. Create an n8n account</h3>
+        <p class="reveal">Visit <a href="https://n8n.io" target="_blank" rel="noopener">n8n.io</a>, click <strong>Get Started</strong>, enter your credentials and select <strong>Start 14-day free trial</strong>.</p>
+        <figure class="circuit-figure reveal">
+            <img src="https://s3.ap-south-1.amazonaws.com/new-assets.ccbp.in/frontend/loading-data/niat_java/niat_coding_questions/guardsense-n8n-signup-start-trial.png" alt="n8n 'Start automating today' signup form">
+            <figcaption>The n8n Cloud signup form — fill in your details and start the free trial.</figcaption>
+        </figure>
+
+        <p class="reveal">A short questionnaire appears asking about the recipient and purpose. Choose <em>"only for me"</em>, then your field (e.g. "Engineering"), then "Education", and so on — or click <strong>OK</strong> to skip the optional questions and just answer the mandatory ones.</p>
+        <figure class="circuit-figure reveal">
+            <img src="https://s3.ap-south-1.amazonaws.com/new-assets.ccbp.in/frontend/loading-data/niat_java/niat_coding_questions/guardsense-n8n-onboarding-questionnaire.png" alt="n8n onboarding questionnaire">
+            <figcaption>Onboarding questionnaire — answer briefly or skip with OK.</figcaption>
+        </figure>
+
+        <p class="reveal">You can skip inviting team members.</p>
+        <figure class="circuit-figure reveal">
+            <img src="https://s3.ap-south-1.amazonaws.com/new-assets.ccbp.in/frontend/loading-data/niat_java/niat_coding_questions/guardsense-n8n-skip-invite-team.png" alt="n8n 'Invite team members' screen with Skip option">
+            <figcaption>Invite team members — click <strong>Skip</strong>.</figcaption>
+        </figure>
+
+        <p class="reveal">Your workspace is ready. Click <strong>Start automating</strong>.</p>
+        <figure class="circuit-figure reveal">
+            <img src="https://s3.ap-south-1.amazonaws.com/new-assets.ccbp.in/frontend/loading-data/niat_java/niat_coding_questions/guardsense-n8n-start-automating.png" alt="n8n 'Your workspace is ready' screen">
+            <figcaption>"Your workspace is ready!" — click <strong>Start automating</strong>.</figcaption>
+        </figure>
+
+        <h3 class="reveal">2. Create the workflow</h3>
+        <p class="reveal">On the Overview screen, click <strong>Create Workflow</strong> in the top-right corner.</p>
+        <figure class="circuit-figure reveal">
+            <img src="https://s3.ap-south-1.amazonaws.com/new-assets.ccbp.in/frontend/loading-data/niat_java/niat_coding_questions/guardsense-n8n-create-workflow-button.png" alt="n8n Overview screen with Create Workflow button">
+            <figcaption>Overview → <strong>Create Workflow</strong>.</figcaption>
+        </figure>
+
+        <p class="reveal">To start designing the flow, click <strong>Add first step</strong> (the plus icon). This is where you wire in every node the flow needs.</p>
+        <figure class="circuit-figure reveal">
+            <img src="https://s3.ap-south-1.amazonaws.com/new-assets.ccbp.in/frontend/loading-data/niat_java/niat_coding_questions/guardsense-n8n-add-first-step.png" alt="Empty n8n canvas with 'Add first step' button">
+            <figcaption>Empty canvas — click <strong>Add first step</strong>.</figcaption>
+        </figure>
+
+        <h3 class="reveal">3. Add the Webhook trigger</h3>
+        <p class="reveal">A search menu lets you locate every workflow node. Search for <strong>webhook</strong>; the lightning-bolt icon marks it as a <em>trigger</em> node — the one that starts the workflow.</p>
+        <figure class="circuit-figure reveal">
+            <img src="https://s3.ap-south-1.amazonaws.com/new-assets.ccbp.in/frontend/loading-data/niat_java/niat_coding_questions/guardsense-n8n-search-webhook-node.png" alt="n8n node search showing the Webhook trigger node">
+            <figcaption>Search <strong>webhook</strong> and pick the trigger node.</figcaption>
+        </figure>
+
+        <p class="reveal">In the configuration panel, change a couple of parameters. First, change the HTTP <strong>Method</strong> from <code>GET</code> to <code>POST</code> so an external device can send ("post") data to the URL. For easier reading, also change the <strong>Path</strong> from the random string to something like <code>ESP/clock</code>.</p>
+        <figure class="circuit-figure reveal">
+            <img src="https://s3.ap-south-1.amazonaws.com/new-assets.ccbp.in/frontend/loading-data/niat_java/niat_coding_questions/guardsense-n8n-webhook-config-post-method.png" alt="n8n Webhook node configuration panel set to POST">
+            <figcaption>Set <strong>HTTP Method</strong> to <code>POST</code> and give the <strong>Path</strong> a readable name.</figcaption>
+        </figure>
+
+        <p class="reveal">Click the <strong>Test URL</strong> to copy it to your clipboard. Then jump to <a href="#phase5-flash"><strong>Step 2: Flash the ESP32</strong></a> below, paste it into <code>N8N_WEBHOOK_URL</code> in the sketch in place of <code>&lt;PRODUCTION URL - FROM N8N WEBHOOK&gt;</code> (also set <code>WIFI_SSID</code> and <code>WIFI_PASSWORD</code>), and upload the sketch to the ESP32 with the hardware already wired. Then come back here and click <strong>Listen for test event</strong>.</p>
+        <figure class="circuit-figure reveal">
+            <img src="https://s3.ap-south-1.amazonaws.com/new-assets.ccbp.in/frontend/loading-data/niat_java/niat_coding_questions/guardsense-n8n-webhook-test-url.png" alt="n8n Webhook node 'Listening for test event'">
+            <figcaption>"Listening for test event" — n8n now waits for a POST from the ESP32.</figcaption>
+        </figure>
+
+        <p class="reveal">Tap your card. The request schema appears in the <strong>OUTPUT</strong> panel on the right — headers plus the JSON body (<code>uid</code>, <code>name</code>, <code>event_type</code>).</p>
+        <figure class="circuit-figure reveal">
+            <img src="https://s3.ap-south-1.amazonaws.com/new-assets.ccbp.in/frontend/loading-data/niat_java/niat_coding_questions/guardsense-n8n-webhook-schema-output.png" alt="n8n Webhook OUTPUT panel showing the received request schema">
+            <figcaption>The captured request schema — this is the data the next nodes can pull from.</figcaption>
+        </figure>
+
+        <h3 class="reveal">4. Add the Date &amp; Time node</h3>
+        <p class="reveal">Press <kbd>Esc</kbd> or click <strong>Back to canvas</strong>. Click the plus symbol in front of the Webhook trigger to add another node, and in the search menu locate the <strong>Date &amp; Time</strong> node — it supplies the exact date and time for the email.</p>
+        <figure class="circuit-figure reveal">
+            <img src="https://s3.ap-south-1.amazonaws.com/new-assets.ccbp.in/frontend/loading-data/niat_java/niat_coding_questions/guardsense-n8n-search-datetime-node.png" alt="n8n 'What happens next?' menu with the Date & Time node">
+            <figcaption>Add the <strong>Date &amp; Time</strong> node after the Webhook.</figcaption>
+        </figure>
+
+        <p class="reveal">Select the <strong>Get Current Date</strong> sub-option and click <strong>Execute step</strong>. The node's output shows in the OUTPUT panel on the right.</p>
+        <figure class="circuit-figure reveal">
+            <img src="https://s3.ap-south-1.amazonaws.com/new-assets.ccbp.in/frontend/loading-data/niat_java/niat_coding_questions/guardsense-n8n-datetime-execute-step.png" alt="n8n Date & Time node executed, showing currentDate output">
+            <figcaption>"Get Current Date" executed — <code>currentDate</code> is now available downstream.</figcaption>
+        </figure>
+
+        <h3 class="reveal">5. Add the Gmail node</h3>
+        <p class="reveal">Add a new node and search for <strong>Gmail</strong>. From the available options, select <strong>Send a message</strong>.</p>
+        <figure class="circuit-figure reveal">
+            <img src="https://s3.ap-south-1.amazonaws.com/new-assets.ccbp.in/frontend/loading-data/niat_java/niat_coding_questions/guardsense-n8n-gmail-send-message-node.png" alt="n8n Gmail actions list with 'Send a message' selected">
+            <figcaption>Gmail → <strong>Send a message</strong>.</figcaption>
+        </figure>
+
+        <p class="reveal">A configuration window appears. Click the <strong>Credential to connect with</strong> box and select <strong>Create new credential</strong>.</p>
+        <figure class="circuit-figure reveal">
+            <img src="https://s3.ap-south-1.amazonaws.com/new-assets.ccbp.in/frontend/loading-data/niat_java/niat_coding_questions/guardsense-n8n-gmail-create-credential.png" alt="n8n 'Send a message' config with 'Create new credential'">
+            <figcaption>Credential to connect with → <strong>Create new credential</strong>.</figcaption>
+        </figure>
+
+        <p class="reveal">Sign in with your Google account (OAuth2 is the recommended option).</p>
+        <figure class="circuit-figure reveal">
+            <img src="https://s3.ap-south-1.amazonaws.com/new-assets.ccbp.in/frontend/loading-data/niat_java/niat_coding_questions/guardsense-n8n-google-signin.png" alt="n8n Gmail credential 'Sign in with Google'">
+            <figcaption>Connect using <strong>OAuth2</strong> → <strong>Sign in with Google</strong>.</figcaption>
+        </figure>
+
+        <p class="reveal">After signing in, close the sign-up tab with the <strong>X</strong> and return to the node — it should now show <strong>Account connected</strong>.</p>
+        <figure class="circuit-figure reveal">
+            <img src="https://s3.ap-south-1.amazonaws.com/new-assets.ccbp.in/frontend/loading-data/niat_java/niat_coding_questions/guardsense-n8n-close-signup-tab.png" alt="n8n Gmail credential showing 'Account connected'">
+            <figcaption>"Account connected" — the Gmail credential is ready.</figcaption>
+        </figure>
+
+        <p class="reveal">Fill in the required fields. Put the recipient in the <strong>To</strong> field, add a <strong>Subject</strong>, and set <strong>Email Type</strong> to <code>TEXT</code>.</p>
+        <figure class="circuit-figure reveal">
+            <img src="https://s3.ap-south-1.amazonaws.com/new-assets.ccbp.in/frontend/loading-data/niat_java/niat_coding_questions/guardsense-n8n-gmail-fields-config.png" alt="n8n Gmail 'Send a message' fields — To, Subject, Email Type">
+            <figcaption>Set <strong>To</strong>, <strong>Subject</strong>, and <strong>Email Type = Text</strong>.</figcaption>
+        </figure>
+
+        <p class="reveal">In the <strong>Message</strong> box, type your template labels — "Date &amp; time" and "Device ID". Then click <strong>Execute previous nodes</strong> on the left of the panel so the schema from earlier nodes is available.</p>
+        <figure class="circuit-figure reveal">
+            <img src="https://s3.ap-south-1.amazonaws.com/new-assets.ccbp.in/frontend/loading-data/niat_java/niat_coding_questions/guardsense-n8n-gmail-customize-fields.png" alt="n8n Gmail message box with template labels and 'Execute previous nodes'">
+            <figcaption>Type the label text, then <strong>Execute previous nodes</strong>.</figcaption>
+        </figure>
+
+        <p class="reveal">Drop the relevant schema fields into the message box to insert the specific values.</p>
+        <figure class="circuit-figure reveal">
+            <img src="https://s3.ap-south-1.amazonaws.com/new-assets.ccbp.in/frontend/loading-data/niat_java/niat_coding_questions/guardsense-n8n-gmail-message-format.png" alt="n8n expression editor mapping message and device ID into the email body">
+            <figcaption>Map the message body — anything inside <code>{{ }}</code> is evaluated as an expression.</figcaption>
+        </figure>
+
+        <p class="reveal">Customize the input as needed: expand the ESP32 <strong>Webhook</strong> and <strong>Date &amp; Time</strong> schemas and drag &amp; drop the message, device ID, and current date into the expression, like so.</p>
+        <figure class="circuit-figure reveal">
+            <img src="https://s3.ap-south-1.amazonaws.com/new-assets.ccbp.in/frontend/loading-data/niat_java/niat_coding_questions/guardsense-n8n-gmail-drop-schema.png" alt="n8n expression editor with webhook and date fields dragged into the email body">
+            <figcaption>Drag the schema fields in — the Result panel shows the resolved email body.</figcaption>
+        </figure>
+
+        <h3 class="reveal">6. Go live</h3>
+        <p class="reveal">Once testing works, go back to the ESP32 code (Step 2) and replace the Test URL with the <strong>Production URL</strong> from the Webhook node's configuration.</p>
+        <figure class="circuit-figure reveal">
+            <img src="https://s3.ap-south-1.amazonaws.com/new-assets.ccbp.in/frontend/loading-data/niat_java/niat_coding_questions/guardsense-n8n-webhook-production-url.png" alt="n8n Webhook node showing the Production URL tab">
+            <figcaption>Switch the webhook to <strong>Production URL</strong> and paste that into <code>N8N_WEBHOOK_URL</code>.</figcaption>
+        </figure>
+
+        <p class="reveal">Click <strong>Back to canvas</strong>, then <strong>Save</strong> in the top-right corner, and flip the <strong>Active</strong> switch on to keep the workflow running.</p>
+        <figure class="circuit-figure reveal">
+            <img src="https://s3.ap-south-1.amazonaws.com/new-assets.ccbp.in/frontend/loading-data/niat_java/niat_coding_questions/guardsense-n8n-save-activate-workflow.png" alt="n8n workflow with three nodes, Save button and Active toggle">
+            <figcaption>Three nodes wired up — <strong>Save</strong> and set the workflow <strong>Active</strong>.</figcaption>
+        </figure>
+
+        <p class="reveal">The n8n workflow is now ready. Click <strong>Execute workflow</strong> to see it in action: <strong>Webhook → Date &amp; Time → Send a message</strong>.</p>
+        <figure class="circuit-figure reveal">
+            <img src="https://s3.ap-south-1.amazonaws.com/new-assets.ccbp.in/frontend/loading-data/niat_java/niat_coding_questions/guardsense-n8n-execute-workflow-test.png" alt="n8n three-node workflow with Execute workflow button">
+            <figcaption>Run <strong>Execute workflow</strong> to test the full chain.</figcaption>
+        </figure>
+
+        <p class="reveal">When a scan fires, you'll receive an email.</p>
+
+        <!-- ══════════════════ STEP 2: FLASH THE ESP32 ══════════════════ -->
+        <h2 id="phase5-flash" class="reveal">Step 2: Flash the ESP32</h2>
 
         <h3 class="reveal">Full Code</h3>
         <pre class="reveal has-lang"><span class="pre-lang">cpp</span><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>#include &lt;SPI.h&gt;
@@ -1787,8 +1941,7 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &amp;Wire, -1);
 const char* WIFI_SSID     = "WIFI-SSID";
 const char* WIFI_PASSWORD = "PASSWORD";
 
-// Paste your n8n Webhook node's "Production URL" here - no separate
-// server.py needed anymore, the ESP32 talks to n8n directly.
+// Paste your n8n Webhook node's "Production URL" here.
 const char* N8N_WEBHOOK_URL = "PRODUCTION URL - FROM N8N WEBHOOK ";
 // ==============================================================================
 
@@ -2030,162 +2183,6 @@ void feedback(int count) {
             <li><code>sendEvent(eventType)</code>: builds a small JSON payload (<code>uid</code>, <code>name</code>, <code>event_type</code>) with <code>ArduinoJson</code> and POSTs it via <code>HTTPClient</code> straight to <code>N8N_WEBHOOK_URL</code>. n8n receives it on the Webhook node and the rest of the workflow (date/time + email) runs from there.</li>
         </ul>
 
-        <hr>
-
-        <!-- ══════════════════ n8n WORKFLOW ══════════════════ -->
-        <h1 id="n8n-workflow" class="reveal">Building the n8n Workflow</h1>
-        <p class="reveal">The ESP32 side is done — now build the automation that receives each scan, stamps it with the current date and time, and emails an alert. The workflow is three nodes: <strong>Webhook → Date &amp; Time → Gmail</strong>.</p>
-
-        <h3 class="reveal">1. Create an n8n account</h3>
-        <p class="reveal">Visit <a href="https://n8n.io" target="_blank" rel="noopener">n8n.io</a>, click <strong>Get Started</strong>, enter your credentials and select <strong>Start 14-day free trial</strong>.</p>
-        <figure class="circuit-figure reveal">
-            <img src="https://s3.ap-south-1.amazonaws.com/new-assets.ccbp.in/frontend/loading-data/niat_java/niat_coding_questions/guardsense-n8n-signup-start-trial.png" alt="n8n 'Start automating today' signup form">
-            <figcaption>The n8n Cloud signup form — fill in your details and start the free trial.</figcaption>
-        </figure>
-
-        <p class="reveal">A short questionnaire appears asking about the recipient and purpose. Choose <em>"only for me"</em>, then your field (e.g. "Engineering"), then "Education", and so on — or click <strong>OK</strong> to skip the optional questions and just answer the mandatory ones.</p>
-        <figure class="circuit-figure reveal">
-            <img src="https://s3.ap-south-1.amazonaws.com/new-assets.ccbp.in/frontend/loading-data/niat_java/niat_coding_questions/guardsense-n8n-onboarding-questionnaire.png" alt="n8n onboarding questionnaire">
-            <figcaption>Onboarding questionnaire — answer briefly or skip with OK.</figcaption>
-        </figure>
-
-        <p class="reveal">You can skip inviting team members.</p>
-        <figure class="circuit-figure reveal">
-            <img src="https://s3.ap-south-1.amazonaws.com/new-assets.ccbp.in/frontend/loading-data/niat_java/niat_coding_questions/guardsense-n8n-skip-invite-team.png" alt="n8n 'Invite team members' screen with Skip option">
-            <figcaption>Invite team members — click <strong>Skip</strong>.</figcaption>
-        </figure>
-
-        <p class="reveal">Your workspace is ready. Click <strong>Start automating</strong>.</p>
-        <figure class="circuit-figure reveal">
-            <img src="https://s3.ap-south-1.amazonaws.com/new-assets.ccbp.in/frontend/loading-data/niat_java/niat_coding_questions/guardsense-n8n-start-automating.png" alt="n8n 'Your workspace is ready' screen">
-            <figcaption>"Your workspace is ready!" — click <strong>Start automating</strong>.</figcaption>
-        </figure>
-
-        <h3 class="reveal">2. Create the workflow</h3>
-        <p class="reveal">On the Overview screen, click <strong>Create Workflow</strong> in the top-right corner.</p>
-        <figure class="circuit-figure reveal">
-            <img src="https://s3.ap-south-1.amazonaws.com/new-assets.ccbp.in/frontend/loading-data/niat_java/niat_coding_questions/guardsense-n8n-create-workflow-button.png" alt="n8n Overview screen with Create Workflow button">
-            <figcaption>Overview → <strong>Create Workflow</strong>.</figcaption>
-        </figure>
-
-        <p class="reveal">To start designing the flow, click <strong>Add first step</strong> (the plus icon). This is where you wire in every node the flow needs.</p>
-        <figure class="circuit-figure reveal">
-            <img src="https://s3.ap-south-1.amazonaws.com/new-assets.ccbp.in/frontend/loading-data/niat_java/niat_coding_questions/guardsense-n8n-add-first-step.png" alt="Empty n8n canvas with 'Add first step' button">
-            <figcaption>Empty canvas — click <strong>Add first step</strong>.</figcaption>
-        </figure>
-
-        <h3 class="reveal">3. Add the Webhook trigger</h3>
-        <p class="reveal">A search menu lets you locate every workflow node. Search for <strong>webhook</strong>; the lightning-bolt icon marks it as a <em>trigger</em> node — the one that starts the workflow.</p>
-        <figure class="circuit-figure reveal">
-            <img src="https://s3.ap-south-1.amazonaws.com/new-assets.ccbp.in/frontend/loading-data/niat_java/niat_coding_questions/guardsense-n8n-search-webhook-node.png" alt="n8n node search showing the Webhook trigger node">
-            <figcaption>Search <strong>webhook</strong> and pick the trigger node.</figcaption>
-        </figure>
-
-        <p class="reveal">In the configuration panel, change a couple of parameters. First, change the HTTP <strong>Method</strong> from <code>GET</code> to <code>POST</code> so an external device can send ("post") data to the URL. For easier reading, also change the <strong>Path</strong> from the random string to something like <code>ESP/clock</code>.</p>
-        <figure class="circuit-figure reveal">
-            <img src="https://s3.ap-south-1.amazonaws.com/new-assets.ccbp.in/frontend/loading-data/niat_java/niat_coding_questions/guardsense-n8n-webhook-config-post-method.png" alt="n8n Webhook node configuration panel set to POST">
-            <figcaption>Set <strong>HTTP Method</strong> to <code>POST</code> and give the <strong>Path</strong> a readable name.</figcaption>
-        </figure>
-
-        <p class="reveal">Click the <strong>Test URL</strong> to copy it to your clipboard. Open the Arduino sketch and replace <code>&lt;PRODUCTION URL - FROM N8N WEBHOOK&gt;</code> in <code>N8N_WEBHOOK_URL</code> with the copied URL (also set <code>WIFI_SSID</code> and <code>WIFI_PASSWORD</code>). Upload the sketch to the ESP32 with the hardware already wired, then click <strong>Listen for test event</strong>.</p>
-        <figure class="circuit-figure reveal">
-            <img src="https://s3.ap-south-1.amazonaws.com/new-assets.ccbp.in/frontend/loading-data/niat_java/niat_coding_questions/guardsense-n8n-webhook-test-url.png" alt="n8n Webhook node 'Listening for test event'">
-            <figcaption>"Listening for test event" — n8n now waits for a POST from the ESP32.</figcaption>
-        </figure>
-
-        <p class="reveal">Tap your card. The request schema appears in the <strong>OUTPUT</strong> panel on the right — headers plus the JSON body (<code>uid</code>, <code>name</code>, <code>event_type</code>).</p>
-        <figure class="circuit-figure reveal">
-            <img src="https://s3.ap-south-1.amazonaws.com/new-assets.ccbp.in/frontend/loading-data/niat_java/niat_coding_questions/guardsense-n8n-webhook-schema-output.png" alt="n8n Webhook OUTPUT panel showing the received request schema">
-            <figcaption>The captured request schema — this is the data the next nodes can pull from.</figcaption>
-        </figure>
-
-        <h3 class="reveal">4. Add the Date &amp; Time node</h3>
-        <p class="reveal">Press <kbd>Esc</kbd> or click <strong>Back to canvas</strong>. Click the plus symbol in front of the Webhook trigger to add another node, and in the search menu locate the <strong>Date &amp; Time</strong> node — it supplies the exact date and time for the email.</p>
-        <figure class="circuit-figure reveal">
-            <img src="https://s3.ap-south-1.amazonaws.com/new-assets.ccbp.in/frontend/loading-data/niat_java/niat_coding_questions/guardsense-n8n-search-datetime-node.png" alt="n8n 'What happens next?' menu with the Date & Time node">
-            <figcaption>Add the <strong>Date &amp; Time</strong> node after the Webhook.</figcaption>
-        </figure>
-
-        <p class="reveal">Select the <strong>Get Current Date</strong> sub-option and click <strong>Execute step</strong>. The node's output shows in the OUTPUT panel on the right.</p>
-        <figure class="circuit-figure reveal">
-            <img src="https://s3.ap-south-1.amazonaws.com/new-assets.ccbp.in/frontend/loading-data/niat_java/niat_coding_questions/guardsense-n8n-datetime-execute-step.png" alt="n8n Date & Time node executed, showing currentDate output">
-            <figcaption>"Get Current Date" executed — <code>currentDate</code> is now available downstream.</figcaption>
-        </figure>
-
-        <h3 class="reveal">5. Add the Gmail node</h3>
-        <p class="reveal">Add a new node and search for <strong>Gmail</strong>. From the available options, select <strong>Send a message</strong>.</p>
-        <figure class="circuit-figure reveal">
-            <img src="https://s3.ap-south-1.amazonaws.com/new-assets.ccbp.in/frontend/loading-data/niat_java/niat_coding_questions/guardsense-n8n-gmail-send-message-node.png" alt="n8n Gmail actions list with 'Send a message' selected">
-            <figcaption>Gmail → <strong>Send a message</strong>.</figcaption>
-        </figure>
-
-        <p class="reveal">A configuration window appears. Click the <strong>Credential to connect with</strong> box and select <strong>Create new credential</strong>.</p>
-        <figure class="circuit-figure reveal">
-            <img src="https://s3.ap-south-1.amazonaws.com/new-assets.ccbp.in/frontend/loading-data/niat_java/niat_coding_questions/guardsense-n8n-gmail-create-credential.png" alt="n8n 'Send a message' config with 'Create new credential'">
-            <figcaption>Credential to connect with → <strong>Create new credential</strong>.</figcaption>
-        </figure>
-
-        <p class="reveal">Sign in with your Google account (OAuth2 is the recommended option).</p>
-        <figure class="circuit-figure reveal">
-            <img src="https://s3.ap-south-1.amazonaws.com/new-assets.ccbp.in/frontend/loading-data/niat_java/niat_coding_questions/guardsense-n8n-google-signin.png" alt="n8n Gmail credential 'Sign in with Google'">
-            <figcaption>Connect using <strong>OAuth2</strong> → <strong>Sign in with Google</strong>.</figcaption>
-        </figure>
-
-        <p class="reveal">After signing in, close the sign-up tab with the <strong>X</strong> and return to the node — it should now show <strong>Account connected</strong>.</p>
-        <figure class="circuit-figure reveal">
-            <img src="https://s3.ap-south-1.amazonaws.com/new-assets.ccbp.in/frontend/loading-data/niat_java/niat_coding_questions/guardsense-n8n-close-signup-tab.png" alt="n8n Gmail credential showing 'Account connected'">
-            <figcaption>"Account connected" — the Gmail credential is ready.</figcaption>
-        </figure>
-
-        <p class="reveal">Fill in the required fields. Put the recipient in the <strong>To</strong> field, add a <strong>Subject</strong>, and set <strong>Email Type</strong> to <code>TEXT</code>.</p>
-        <figure class="circuit-figure reveal">
-            <img src="https://s3.ap-south-1.amazonaws.com/new-assets.ccbp.in/frontend/loading-data/niat_java/niat_coding_questions/guardsense-n8n-gmail-fields-config.png" alt="n8n Gmail 'Send a message' fields — To, Subject, Email Type">
-            <figcaption>Set <strong>To</strong>, <strong>Subject</strong>, and <strong>Email Type = Text</strong>.</figcaption>
-        </figure>
-
-        <p class="reveal">In the <strong>Message</strong> box, type your template labels — "Date &amp; time" and "Device ID". Then click <strong>Execute previous nodes</strong> on the left of the panel so the schema from earlier nodes is available.</p>
-        <figure class="circuit-figure reveal">
-            <img src="https://s3.ap-south-1.amazonaws.com/new-assets.ccbp.in/frontend/loading-data/niat_java/niat_coding_questions/guardsense-n8n-gmail-customize-fields.png" alt="n8n Gmail message box with template labels and 'Execute previous nodes'">
-            <figcaption>Type the label text, then <strong>Execute previous nodes</strong>.</figcaption>
-        </figure>
-
-        <p class="reveal">Drop the relevant schema fields into the message box to insert the specific values.</p>
-        <figure class="circuit-figure reveal">
-            <img src="https://s3.ap-south-1.amazonaws.com/new-assets.ccbp.in/frontend/loading-data/niat_java/niat_coding_questions/guardsense-n8n-gmail-message-format.png" alt="n8n expression editor mapping message and device ID into the email body">
-            <figcaption>Map the message body — anything inside <code>{{ }}</code> is evaluated as an expression.</figcaption>
-        </figure>
-
-        <p class="reveal">Customize the input as needed: expand the ESP32 <strong>Webhook</strong> and <strong>Date &amp; Time</strong> schemas and drag &amp; drop the message, device ID, and current date into the expression, like so.</p>
-        <figure class="circuit-figure reveal">
-            <img src="https://s3.ap-south-1.amazonaws.com/new-assets.ccbp.in/frontend/loading-data/niat_java/niat_coding_questions/guardsense-n8n-gmail-drop-schema.png" alt="n8n expression editor with webhook and date fields dragged into the email body">
-            <figcaption>Drag the schema fields in — the Result panel shows the resolved email body.</figcaption>
-        </figure>
-
-        <h3 class="reveal">6. Go live</h3>
-        <p class="reveal">Once testing works, go back to the ESP32 code and replace the Test URL with the <strong>Production URL</strong> from the Webhook node's configuration.</p>
-        <figure class="circuit-figure reveal">
-            <img src="https://s3.ap-south-1.amazonaws.com/new-assets.ccbp.in/frontend/loading-data/niat_java/niat_coding_questions/guardsense-n8n-webhook-production-url.png" alt="n8n Webhook node showing the Production URL tab">
-            <figcaption>Switch the webhook to <strong>Production URL</strong> and paste that into <code>N8N_WEBHOOK_URL</code>.</figcaption>
-        </figure>
-
-        <p class="reveal">Click <strong>Back to canvas</strong>, then <strong>Save</strong> in the top-right corner, and flip the <strong>Active</strong> switch on to keep the workflow running.</p>
-        <figure class="circuit-figure reveal">
-            <img src="https://s3.ap-south-1.amazonaws.com/new-assets.ccbp.in/frontend/loading-data/niat_java/niat_coding_questions/guardsense-n8n-save-activate-workflow.png" alt="n8n workflow with three nodes, Save button and Active toggle">
-            <figcaption>Three nodes wired up — <strong>Save</strong> and set the workflow <strong>Active</strong>.</figcaption>
-        </figure>
-
-        <p class="reveal">The n8n workflow is now ready. Click <strong>Execute workflow</strong> to see it in action: <strong>Webhook → Date &amp; Time → Send a message</strong>.</p>
-        <figure class="circuit-figure reveal">
-            <img src="https://s3.ap-south-1.amazonaws.com/new-assets.ccbp.in/frontend/loading-data/niat_java/niat_coding_questions/guardsense-n8n-execute-workflow-test.png" alt="n8n three-node workflow with Execute workflow button">
-            <figcaption>Run <strong>Execute workflow</strong> to test the full chain.</figcaption>
-        </figure>
-
-        <p class="reveal">When a scan fires, you'll receive an email.</p>
-        <!-- <figure class="circuit-figure reveal">
-            <img src="https://s3.ap-south-1.amazonaws.com/new-assets.ccbp.in/frontend/loading-data/niat_java/niat_coding_questions/guardsense-n8n-intruder-alert-email.png" alt="Example alert email produced by the n8n workflow">
-            <figcaption>The alert email — subject, date &amp; time, and device ID, sent automatically with n8n.</figcaption>
-        </figure> -->
-
         <div class="checkpoint reveal">
             <strong class="tag">✅ Checkpoint</strong>
             <p style="text-align:left; margin-bottom:0;">Tap your card → OLED "CLOCKED IN", one beep + one blink, then "Sent to n8n" if the workflow is active and the URL is correct. Tap again → "CLOCKED OUT", two beeps + two blinks. Each tap shows up as a new execution in n8n and an email in your inbox.</p>
@@ -2203,248 +2200,11 @@ void feedback(int count) {
 
         <hr>
 
-        <!-- ══════════════════ PHASE 6 ══════════════════ -->
-        <h1 id="phase6" class="reveal">Challenge— Many Readers, Many Cards → One Dashboard</h1>
-
-        <div class="exercise-card reveal">
-
-            <h3>The Story So Far</h3>
-            <p style="text-align:left;">Phase 5 gave you <strong>one</strong> ESP32 with <strong>one</strong> registered card, POSTing to n8n. That is a single turnstile. A real office has a reader at the front door, one at the lab, one at the store room — and every reader has to recognise <em>dozens</em> of cards, not one. The moment there are two readers, two questions appear:</p>
-            <ul>
-                <li><strong>"Which door did this scan happen at?"</strong> — every event needs to say <em>where</em> it came from.</li>
-                <li><strong>"Where do all these events pile up so I can see everyone at once?"</strong> — you need one place that merges every reader into a single live table.</li>
-            </ul>
-            <p style="text-align:left;">Multi_reader.ino answers both: each board becomes a named <strong>reader</strong> carrying a small <strong>card registry</strong>, and every board POSTs to <em>one</em> collector that keeps a single row per person and a full history you can export.</p>
-        </div>
-
-        <h3 class="reveal">Idea 1 — From one card to a registry</h3>
-        <p class="reveal">Phase 5's single <code>MY_CARD_UID</code> becomes an array of <code>{ uid, name }</code> pairs — exactly the <code>findCard()</code> lookup you already built in Phase 4, now on a networked board. Each card also needs its own clock-in state, because two people at the same reader are independent.</p>
-
-        <h3 class="reveal">Idea 2 — Every board is a named reader</h3>
-        <p class="reveal">Add a <code>READER_ID</code> constant (<code>"front_door"</code>, <code>"lab"</code>, …) and send it in the JSON as <code>reader_id</code>. Same firmware flashed to every board — only that one string changes per device.</p>
-
-        <h3 class="reveal">Idea 3 — One collector, one dashboard</h3>
-        <p class="reveal">Point every board's <code>SERVER_URL</code> at a single machine running <code>server.py</code> (a tiny Flask app). It keeps a live "who is IN right now" table keyed by UID, a full event log, and a one-click CSV export. <code>dashboard.html</code> polls it every 2&nbsp;seconds. (n8n route: keep the Webhook and add a <strong>Google Sheets → Append row</strong> node keyed by <code>uid</code> + <code>reader_id</code> instead of running <code>server.py</code>.)</p>
-
-        <h3 class="reveal">Firmware — <code>phase6_multi_reader.ino</code></h3>
-        <pre class="reveal has-lang"><span class="pre-lang">cpp</span><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>#include &lt;SPI.h&gt;
-#include &lt;MFRC522.h&gt;
-#include &lt;WiFi.h&gt;
-#include &lt;HTTPClient.h&gt;
-#include &lt;ArduinoJson.h&gt;
-#include &lt;Wire.h&gt;
-#include &lt;Adafruit_GFX.h&gt;
-#include &lt;Adafruit_SSD1306.h&gt;
-
-#define SS_PIN     5
-#define RST_PIN    27
-#define BUZZER_PIN 4
-#define LED_PIN    2
-
-#define SCREEN_WIDTH   128
-#define SCREEN_HEIGHT  64
-#define SCREEN_ADDRESS 0x3C
-
-MFRC522 rfid(SS_PIN, RST_PIN);
-Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &amp;Wire, -1);
-
-// ============ SAME FOR EVERYONE ============
-const char* WIFI_SSID     = "WIFI-SSID";
-const char* WIFI_PASSWORD = "PASSWORD";
-const char* SERVER_URL    = "http://10.10.49.227:5000/events";  // collector laptop IP + /events
-// ==========================================
-
-// ============ ONE LINE PER DEVICE ============
-const char* READER_ID = "front_door";   // "lab", "store_room", ...
-// ============================================
-
-// ============ THE CARD REGISTRY - same on every reader ============
-struct Card { const char* uid; const char* name; };
-Card registry[] = {
-  { "93A74C21", "NIAT" },
-  { "A1B2C3D4", "GUEST" },
-  { "11223344", "Guest 1" },
-};
-const int CARD_COUNT = sizeof(registry) / sizeof(registry[0]);
-
-// Per-card clock-in state, index matches registry[]
-bool clockedIn[CARD_COUNT] = { false };
-
-unsigned long lastWifiCheck = 0;
-const unsigned long WIFI_CHECK_INTERVAL = 5000;
-
-int findCard(const String &amp;uid) {
-  for (int i = 0; i &lt; CARD_COUNT; i++) {
-    if (uid.equalsIgnoreCase(registry[i].uid)) return i;
-  }
-  return -1;   // not registered
-}
-
-void setup() {
-  Serial.begin(115200);
-  while (!Serial);
-  SPI.begin();
-  rfid.PCD_Init();
-  pinMode(LED_PIN, OUTPUT);
-  digitalWrite(LED_PIN, LOW);
-  Wire.begin(21, 22);
-  if (!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
-    Serial.println("OLED not found - check wiring/address.");
-  }
-  showMessage("Reader:", READER_ID);
-  connectToWiFi();
-  showIdleScreen();
-}
-
-void loop() {
-  String uid;
-  if (readRFID(uid)) {
-    int idx = findCard(uid);
-    if (idx == -1) {
-      Serial.print("Unregistered card: "); Serial.println(uid);
-      showMessage("Card not", "registered");
-      feedback(3);
-      delay(1500);
-      showIdleScreen();
-    } else {
-      handleScan(idx);
-    }
-  }
-
-  if (millis() - lastWifiCheck &gt; WIFI_CHECK_INTERVAL) {
-    lastWifiCheck = millis();
-    if (WiFi.status() != WL_CONNECTED) {
-      showMessage("WiFi lost...", "Reconnecting");
-      connectToWiFi();
-      showIdleScreen();
-    }
-  }
-}
-
-void handleScan(int idx) {
-  String name       = registry[idx].name;
-  String uid        = registry[idx].uid;
-  bool   nowIn      = !clockedIn[idx];
-  clockedIn[idx]    = nowIn;
-  String eventType  = nowIn ? "CLOCK_IN" : "CLOCK_OUT";
-
-  Serial.printf("%s: %s (%s) @ %s\n", eventType.c_str(), name.c_str(), uid.c_str(), READER_ID);
-
-  feedback(nowIn ? 1 : 2);
-  showMessage(name, nowIn ? "CLOCKED IN" : "CLOCKED OUT");
-
-  bool sent = sendEvent(uid, name, eventType);
-  delay(1000);
-  showStatusResult(sent);
-  delay(900);
-  showIdleScreen();
-}
-
-bool sendEvent(String uid, String name, String eventType) {
-  if (WiFi.status() != WL_CONNECTED) {
-    Serial.println("No Wi-Fi - event NOT sent.");
-    return false;
-  }
-
-  StaticJsonDocument&lt;256&gt; doc;
-  doc["uid"]        = uid;
-  doc["name"]       = name;
-  doc["event_type"] = eventType;
-  doc["reader_id"]  = READER_ID;                 // NEW: which door
-  doc["uptime_ms"]  = millis();                  // collector adds the real timestamp
-
-  String payload;
-  serializeJson(doc, payload);
-
-  HTTPClient http;
-  http.begin(SERVER_URL);
-  http.addHeader("Content-Type", "application/json");
-  int code = http.POST(payload);
-  bool ok = (code &gt; 0 &amp;&amp; code &lt; 300);
-  Serial.print("Collector responded: "); Serial.println(code);
-  http.end();
-  return ok;
-}
-
-bool readRFID(String &amp;uid) {
-  if (!rfid.PICC_IsNewCardPresent()) return false;
-  if (!rfid.PICC_ReadCardSerial())   return false;
-  uid = "";
-  for (byte i = 0; i &lt; rfid.uid.size; i++) {
-    if (rfid.uid.uidByte[i] &lt; 0x10) uid += "0";
-    uid += String(rfid.uid.uidByte[i], HEX);
-  }
-  uid.toUpperCase();
-  rfid.PICC_HaltA();
-  rfid.PCD_StopCrypto1();
-  return true;
-}
-
-void connectToWiFi() {
-  showMessage("Connecting to", "WiFi...");
-  WiFi.mode(WIFI_STA);
-  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-  unsigned long start = millis();
-  while (WiFi.status() != WL_CONNECTED &amp;&amp; millis() - start &lt; 15000) delay(300);
-}
-
-void showMessage(String l1, String l2) {
-  display.clearDisplay();
-  display.setTextSize(1);
-  display.setTextColor(SSD1306_WHITE);
-  display.setCursor(0, 10); display.println(l1);
-  display.setCursor(0, 30); display.println(l2);
-  display.display();
-}
-
-void showIdleScreen() {
-  display.clearDisplay();
-  display.setTextSize(1);
-  display.setTextColor(SSD1306_WHITE);
-  display.setCursor(0, 0);  display.println(String("Reader: ") + READER_ID);
-  display.setCursor(0, 20); display.println(WiFi.status() == WL_CONNECTED ? "WiFi: Connected" : "WiFi: Offline");
-  display.setCursor(0, 44); display.println("Tap card to scan");
-  display.display();
-}
-
-void showStatusResult(bool sent) {
-  display.clearDisplay();
-  display.setTextSize(1);
-  display.setTextColor(SSD1306_WHITE);
-  display.setCursor(0, 20); display.println(sent ? "Sent to server" : "Send FAILED");
-  display.setCursor(0, 36); display.println(sent ? "OK" : "Check WiFi/server");
-  display.display();
-}
-
-void feedback(int count) {
-  for (int i = 0; i &lt; count; i++) {
-    tone(BUZZER_PIN, 1000);
-    digitalWrite(LED_PIN, HIGH);
-    delay(180);
-    noTone(BUZZER_PIN);
-    digitalWrite(LED_PIN, LOW);
-    delay(150);
-  }
-}</code></pre>
-
-        <div class="callout callout-note reveal">
-            <strong>What changed from Phase 5</strong>
-            <ul>
-                <li><code>MY_CARD_UID</code> (one string) → <code>registry[]</code> (array) + <code>findCard()</code> from Phase 4.</li>
-                <li><code>isClockedIn</code> (one bool) → <code>clockedIn[CARD_COUNT]</code> (one per person).</li>
-                <li>JSON now carries <code>reader_id</code> so the dashboard can show <em>which door</em>.</li>
-                <li>Target is <code>server.py</code>, the shared collector — not each student's own n8n webhook.</li>
-            </ul>
-        </div>
-
-
-        <hr>
-
         <!-- ══════════════════ COMPLETION ══════════════════ -->
         <div class="completion-banner reveal" id="congrats">
             <h2>You've Built the Full TagIT Pipeline</h2>
-            <p>From a bare UID read over SPI, to a Wi-Fi client pushing scans into an n8n workflow, to a fleet of named readers merging every card into one live dashboard — six working phases, each one building directly on the last.</p>
-            <div class="completion-badge">✓ Phases 1 – 6 Complete</div>
+            <p>From a bare UID read over SPI, to a Wi-Fi client pushing scans into an n8n workflow — five working phases, each one building directly on the last.</p>
+            <div class="completion-badge">✓ Phases 1 – 5 Complete</div>
         </div>
 
     </div>
